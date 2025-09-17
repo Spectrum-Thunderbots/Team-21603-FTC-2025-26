@@ -30,18 +30,37 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
+
+@Autonomous(name="The Auto Program", group="Linear OpMode")
+
+public class theAutoProgram extends LinearOpMode {
+
+    static RevHubOrientationOnRobot.LogoFacingDirection[] logoFacingDirections
+            = RevHubOrientationOnRobot.LogoFacingDirection.values();
+    static RevHubOrientationOnRobot.UsbFacingDirection[] usbFacingDirections
+            = RevHubOrientationOnRobot.UsbFacingDirection.values();
+    static int LAST_DIRECTION = logoFacingDirections.length - 1;
+    static float TRIGGER_THRESHOLD = 0.2f;
+
+    IMU imu;
+    int logoFacingDirectionPosition;
+    int usbFacingDirectionPosition;
+    boolean orientationIsValid = true;
 
 
 
 
-@Autonomous(name="autoDriveForward", group="Linear OpMode")
 
-public class autoDriveForward extends LinearOpMode {
+
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
@@ -52,6 +71,17 @@ public class autoDriveForward extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+
+        imu = hardwareMap.get(IMU.class, "imu");
+        logoFacingDirectionPosition = 0; // Up
+        usbFacingDirectionPosition = 2; // Forward
+
+
+
+
+
+
+
 
         frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeftDrive");
         backLeftDrive = hardwareMap.get(DcMotor.class, "backLeftDrive");
@@ -70,20 +100,22 @@ public class autoDriveForward extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        while (opModeIsActive()) {
+            double robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
-        if (opModeIsActive()) {
-            do {
+            if(runtime.seconds() <= 3){
 
                 autoDrive(1, 0, 0);
 
-            }while(runtime.seconds() <= 3);
+            }
 
 
 
 
             // Show the elapsed game time
             telemetry.addData("Run Time", runtime.seconds());
-
+            telemetry.addData("oreintation", robotYaw);
             telemetry.update();
         }
 
