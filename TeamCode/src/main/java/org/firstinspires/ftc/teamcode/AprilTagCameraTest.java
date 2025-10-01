@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import android.util.Size;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
@@ -39,7 +39,7 @@ import java.util.List;
  */
 @TeleOp(name = "aprilTagCameraTest", group = "Linear Opmode")
 
-public class aprilTagCameraTest extends LinearOpMode {
+public class AprilTagCameraTest extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
@@ -110,7 +110,7 @@ public class aprilTagCameraTest extends LinearOpMode {
                 //.setDrawCubeProjection(false)
                 .setDrawTagOutline(true)
                 .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
-                .setTagLibrary(AprilTagGameDatabase.getCurrentGameTagLibrary())
+                .setTagLibrary(AprilTagGameDatabase.getDecodeTagLibrary())
                 //.setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
 
                 // == CAMERA CALIBRATION ==
