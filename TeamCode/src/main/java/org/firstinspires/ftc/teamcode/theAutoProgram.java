@@ -42,7 +42,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 @Autonomous(name="The Auto Program", group="Linear OpMode")
 
-public class theAutoProgram extends LinearOpMode {
+public class Autonomus extends LinearOpMode {
 
     static RevHubOrientationOnRobot.LogoFacingDirection[] logoFacingDirections
             = RevHubOrientationOnRobot.LogoFacingDirection.values();

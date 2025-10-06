@@ -43,8 +43,8 @@ public class mainRobotCode extends LinearOpMode {
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive = null;
 
-
-
+    private DcMotor flyWheelLeft = null;
+    private DcMotor flyWheelRight = null;
 
 
 
@@ -62,11 +62,22 @@ public class mainRobotCode extends LinearOpMode {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
+        flyWheelLeft = hardwareMap.get(DcMotor.class, "Motor0");
+        flyWheelRight = hardwareMap.get(DcMotor.class, "Motor1");
+
+
+
 
 
 
 
         initAprilTag();
+
+        boolean flyWheelState = false;
+        boolean flyWheelStatePrev = false;
+
+
+
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -96,7 +107,7 @@ public class mainRobotCode extends LinearOpMode {
             max = Math.max(max, Math.abs(backLeftPower));
             max = Math.max(max, Math.abs(backRightPower));
 
-            if (max > 1.0) {
+            if (max > .25) {
                 frontLeftPower  /= max;
                 frontRightPower /= max;
                 backLeftPower   /= max;
@@ -108,7 +119,7 @@ public class mainRobotCode extends LinearOpMode {
             frontRightDrive.setPower(frontRightPower);
             backLeftDrive.setPower(backLeftPower);
             backRightDrive.setPower(backRightPower);
-        /* driving code above *********************************************************************************/
+            /* driving code above *********************************************************************************/
 
 
             if (gamepad1.dpad_down) {
@@ -116,12 +127,40 @@ public class mainRobotCode extends LinearOpMode {
             } else if (gamepad1.dpad_up) {
                 visionPortal.resumeStreaming();
             }
-        /* camera on/off *******************************************/
+            /* camera on/off *******************************************/
+
+            if(gamepad2.right_stick_button)
+            {
+                    flyWheelState = !flyWheelState;
+            }
 
 
 
 
-        /* telemetry updates ***************************************/
+
+
+
+
+
+
+
+
+
+
+            if(flyWheelState == true)
+            {
+                flyWheelLeft.setPower(1);
+                flyWheelRight.setPower(1);
+            }
+            else
+            {
+                flyWheelLeft.setPower(0);
+                flyWheelRight.setPower(0);
+            }
+
+
+
+            /* telemetry updates ***************************************/
             telemetryAprilTag();
             telemetry.addData("Status", "Running");
             telemetry.update();
