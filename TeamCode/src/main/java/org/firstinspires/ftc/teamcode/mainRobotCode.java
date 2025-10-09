@@ -65,7 +65,8 @@ public class mainRobotCode extends LinearOpMode {
         flyWheelLeft = hardwareMap.get(DcMotor.class, "Motor0");
         flyWheelRight = hardwareMap.get(DcMotor.class, "Motor1");
 
-
+        flyWheelLeft.setDirection(DcMotor.Direction.REVERSE);
+        flyWheelRight.setDirection(DcMotor.Direction.FORWARD);
 
 
 
@@ -74,7 +75,7 @@ public class mainRobotCode extends LinearOpMode {
         initAprilTag();
 
         boolean flyWheelState = false;
-        boolean flyWheelStatePrev = false;
+
 
 
 
@@ -122,23 +123,18 @@ public class mainRobotCode extends LinearOpMode {
             /* driving code above *********************************************************************************/
 
 
-            if (gamepad1.dpad_down) {
+            if (gamepad1.dpad_down == true) {
                 visionPortal.stopStreaming();
             } else if (gamepad1.dpad_up) {
                 visionPortal.resumeStreaming();
             }
             /* camera on/off *******************************************/
 
-            if(gamepad2.right_stick_button)
+            if(gamepad2.rightStickButtonWasReleased())
             {
                     flyWheelState = !flyWheelState;
+
             }
-
-
-
-
-
-
 
 
 
