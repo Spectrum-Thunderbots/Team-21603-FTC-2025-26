@@ -36,6 +36,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -78,7 +79,7 @@ public class farPark extends LinearOpMode {
     int usbFacingDirectionPosition;
     boolean orientationIsValid = true;
 
-
+    private DistanceSensor frontSensorDistance;
 
 
 
@@ -104,7 +105,7 @@ public class farPark extends LinearOpMode {
         logoFacingDirectionPosition = 0; // Up
         usbFacingDirectionPosition = 2; // Forward
 
-
+        frontSensorDistance = hardwareMap.get(DistanceSensor.class, "distance_Sensor0");
 
 
 
@@ -183,28 +184,53 @@ public class farPark extends LinearOpMode {
             }
 
 
-            if(targetYaw >= robotYaw+tolerance) {
-                driveTurn += .1F;
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //sets gyro correction and any actuator power
+
+
+            //gyro correction
+            if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw){
+                double diff = targetYaw-robotYaw;
+
+                double output;
+
+
+                diff /= 10;
+
+                output = diff/10;
+
+                if(output > 1){
+                    output = 1;
+                } else if (output < -1) {
+                    output = -1;
+                }
+
+
+                driveTurn += (float) output;
+
             }
-            else if (targetYaw <= robotYaw-tolerance) {
-                driveTurn -= .1F;
-            }
 
 
 
-            if(flyWheelState) {
+            //flywheel state
+            if(flyWheelState)
+            {
                 flyWheelLeft.setPower(1);
                 flyWheelRight.setPower(1);
             }
-            else {
+            else
+            {
                 flyWheelLeft.setPower(0);
                 flyWheelRight.setPower(0);
             }
 
             autoDrive(driveX, driveY, driveTurn);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
             // Show the elapsed game time
             telemetry.addData("Run Time", runtime.seconds());
+            telemetry.addData("Front Dis sensor", frontSensorDistance.getDistance(DistanceUnit.MM));
             telemetry.addData("oreintation", robotYaw);
             telemetry.addData("target oreintation", targetYaw);
             telemetryAprilTag();
