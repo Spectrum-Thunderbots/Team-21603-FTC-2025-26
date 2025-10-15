@@ -53,7 +53,7 @@ import java.util.List;
 //@Disabled
 @Autonomous(name="Start Close", group="Linear OpMode")
 
-public class closePark extends LinearOpMode {
+public class closeParkBlue extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
@@ -142,7 +142,7 @@ public class closePark extends LinearOpMode {
         initAprilTag();
 
 
-        boolean flyWheelState = false;
+        double flyWheelPow = 0;
         
 
         float driveX = 0;
@@ -176,7 +176,7 @@ public class closePark extends LinearOpMode {
 
 
             if (step == 0) {
-                flyWheelState = true;
+                flyWheelPow = 0;
 
                 targetYaw = 0;
 
@@ -191,7 +191,7 @@ public class closePark extends LinearOpMode {
             }
             else if (step == 1) {
 
-                flyWheelState = true;
+                flyWheelPow = .75;
 
                 targetYaw = 0;
 
@@ -238,17 +238,10 @@ public class closePark extends LinearOpMode {
 
 
 
-            //flywheel state
-            if(flyWheelState)
-            {
-                flyWheelLeft.setPower(1);
-                flyWheelRight.setPower(1);
-            }
-            else
-            {
-                flyWheelLeft.setPower(0);
-                flyWheelRight.setPower(0);
-            }
+
+                flyWheelLeft.setPower(flyWheelPow);
+                flyWheelRight.setPower(flyWheelPow);
+
 
             autoDrive(driveX, driveY, driveTurn);
 

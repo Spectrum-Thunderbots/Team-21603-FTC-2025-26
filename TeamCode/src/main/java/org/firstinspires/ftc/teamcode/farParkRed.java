@@ -53,7 +53,7 @@ import java.util.List;
 //@Disabled
 @Autonomous(name="Start Far", group="Linear OpMode")
 
-public class farPark extends LinearOpMode {
+public class farParkRed extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
@@ -135,7 +135,7 @@ public class farPark extends LinearOpMode {
         initAprilTag();
 
 
-        boolean flyWheelState = false;
+        double flyWheelPow = 0;
 
 
         float driveX = 0;
@@ -165,7 +165,7 @@ public class farPark extends LinearOpMode {
             double robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
             if (step == 0) {
-                flyWheelState = true;
+                flyWheelPow = 0;
 
                 targetYaw = 0;
 
@@ -213,16 +213,10 @@ public class farPark extends LinearOpMode {
 
 
             //flywheel state
-            if(flyWheelState)
-            {
-                flyWheelLeft.setPower(1);
-                flyWheelRight.setPower(1);
-            }
-            else
-            {
-                flyWheelLeft.setPower(0);
-                flyWheelRight.setPower(0);
-            }
+
+                flyWheelLeft.setPower(flyWheelPow);
+                flyWheelRight.setPower(flyWheelPow);
+
 
             autoDrive(driveX, driveY, driveTurn);
 

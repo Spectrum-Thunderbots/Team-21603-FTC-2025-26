@@ -74,7 +74,7 @@ public class mainRobotCode extends LinearOpMode {
 
         initAprilTag();
 
-        boolean flyWheelState = false;
+        double flyWheelPow = 0;
 
 
 
@@ -123,36 +123,26 @@ public class mainRobotCode extends LinearOpMode {
             /* driving code above *********************************************************************************/
 
 
-            if (gamepad1.dpad_down == true) {
+
+
+
+
+
+
+            if (gamepad1.dpad_down) {
                 visionPortal.stopStreaming();
             } else if (gamepad1.dpad_up) {
                 visionPortal.resumeStreaming();
             }
             /* camera on/off *******************************************/
 
-            if(gamepad2.rightStickButtonWasReleased())
-            {
-                    flyWheelState = !flyWheelState;
-
-            }
+            if(gamepad2.a) flyWheelPow = 1;
+            else if (gamepad2.b) flyWheelPow = 0;
 
 
+            flyWheelLeft.setPower(flyWheelPow);
+            flyWheelRight.setPower(flyWheelPow);
 
-
-
-
-
-
-            if(flyWheelState == true)
-            {
-                flyWheelLeft.setPower(1);
-                flyWheelRight.setPower(1);
-            }
-            else
-            {
-                flyWheelLeft.setPower(0);
-                flyWheelRight.setPower(0);
-            }
 
 
 
