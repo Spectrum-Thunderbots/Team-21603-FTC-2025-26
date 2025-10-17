@@ -74,7 +74,10 @@ public class mainRobotCode extends LinearOpMode {
 
         initAprilTag();
 
-        double flyWheelPow = 0;
+
+        boolean flywheelState = false;
+
+        double flyWheelPow = 1;
 
 
 
@@ -136,12 +139,37 @@ public class mainRobotCode extends LinearOpMode {
             }
             /* camera on/off *******************************************/
 
-            if(gamepad2.a) flyWheelPow = 1;
-            else if (gamepad2.b) flyWheelPow = 0;
 
 
-            flyWheelLeft.setPower(flyWheelPow);
-            flyWheelRight.setPower(flyWheelPow);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            if(gamepad2.bWasPressed()){
+                flywheelState = !flywheelState;
+            }
+
+            if(flywheelState) {
+                flyWheelLeft.setPower(flyWheelPow);
+                flyWheelRight.setPower(flyWheelPow);
+            }
+            else {
+                flyWheelLeft.setPower(-0.01);
+                flyWheelRight.setPower(-0.01);
+            }
 
 
 

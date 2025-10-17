@@ -141,7 +141,7 @@ public class closeParkBlue extends LinearOpMode {
 
         initAprilTag();
 
-
+        boolean flywheelState = false;
         double flyWheelPow = 0;
         
 
@@ -176,6 +176,9 @@ public class closeParkBlue extends LinearOpMode {
 
 
             if (step == 0) {
+
+                flywheelState = false;
+
                 flyWheelPow = 0;
 
                 targetYaw = 0;
@@ -190,6 +193,8 @@ public class closeParkBlue extends LinearOpMode {
 
             }
             else if (step == 1) {
+
+                flywheelState = true;
 
                 flyWheelPow = .75;
 
@@ -238,10 +243,14 @@ public class closeParkBlue extends LinearOpMode {
 
 
 
-
-                flyWheelLeft.setPower(flyWheelPow);
-                flyWheelRight.setPower(flyWheelPow);
-
+                if(flywheelState == true) {
+                    flyWheelLeft.setPower(flyWheelPow);
+                    flyWheelRight.setPower(flyWheelPow);
+                }
+                else {
+                    flyWheelLeft.setPower(-0.01);
+                    flyWheelRight.setPower(-0.01);
+                }
 
             autoDrive(driveX, driveY, driveTurn);
 

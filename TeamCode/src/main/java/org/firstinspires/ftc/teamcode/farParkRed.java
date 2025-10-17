@@ -135,6 +135,8 @@ public class farParkRed extends LinearOpMode {
         initAprilTag();
 
 
+        boolean flywheelState = false;
+
         double flyWheelPow = 0;
 
 
@@ -214,8 +216,14 @@ public class farParkRed extends LinearOpMode {
 
             //flywheel state
 
+            if(flywheelState == true) {
                 flyWheelLeft.setPower(flyWheelPow);
                 flyWheelRight.setPower(flyWheelPow);
+            }
+            else {
+                flyWheelLeft.setPower(-0.01);
+                flyWheelRight.setPower(-0.01);
+            }
 
 
             autoDrive(driveX, driveY, driveTurn);

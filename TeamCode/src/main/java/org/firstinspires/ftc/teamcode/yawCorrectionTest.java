@@ -120,9 +120,9 @@ public class yawCorrectionTest extends LinearOpMode {
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             //sets gyro correction and any actuator power
 
-
+                telemetry.update();
             //gyro correction
-            if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw){
+            if(targetYaw >= imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)+tolerance || targetYaw+tolerance <= imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)){
 
 
                 diff /= 10;
@@ -136,7 +136,7 @@ public class yawCorrectionTest extends LinearOpMode {
                 }
 
 
-                driveTurn += (float) output;
+                driveTurn -= (float) output;
 
             }
 
