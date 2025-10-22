@@ -76,7 +76,7 @@ public class yawCorrectionTest extends LinearOpMode {
 
 
 
-        double flyWheelPow = 0;
+
 
 
         float driveX = 0;
@@ -86,7 +86,7 @@ public class yawCorrectionTest extends LinearOpMode {
 
         double targetYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
-        float tolerance = 1;
+        float tolerance = 10;
 
 
 
@@ -104,14 +104,14 @@ public class yawCorrectionTest extends LinearOpMode {
             double robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
 
-            double diff = targetYaw-robotYaw;
 
-            double output = 0;
 
-            if(gamepad1.dpadUpWasPressed()) tolerance += 0.1;
-            else if (gamepad1.dpadDownWasPressed()) tolerance -= 0.1;
 
-            if (gamepad1.aWasPressed()) targetYaw += 45;
+
+            if(gamepad1.dpadUpWasPressed()) tolerance += 0.1F;
+            else if (gamepad1.dpadDownWasPressed()) tolerance -= 0.1F;
+
+            if (gamepad1.aWasPressed()){ targetYaw += 45;}
             else if (gamepad1.bWasPressed()) targetYaw -= 45;
 
 
@@ -120,25 +120,27 @@ public class yawCorrectionTest extends LinearOpMode {
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             //sets gyro correction and any actuator power
 
-                telemetry.update();
+            telemetry.update();
             //gyro correction
-            if(targetYaw >= imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)+tolerance || targetYaw+tolerance <= imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)){
+            if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw){
+                double diff = Math.abs(robotYaw-targetYaw);
+
+                diff /= 500;
 
 
-                diff /= 10;
 
-                output = diff/10;
-
-                if(output > 1){
-                    output = 1;
-                } else if (output < -1) {
-                    output = -1;
+                if(robotYaw > .5){
+                    diff = .5;
+                } else if (diff < -.5) {
+                    diff = -.5;
                 }
 
+                if(robotYaw <=0){
+                    driveTurn += (float) diff;
 
-                driveTurn -= (float) output;
-
+                } else driveTurn -= (float) diff;
             }
+            else{driveTurn = 0;}
 
 
 
@@ -182,8 +184,8 @@ public class yawCorrectionTest extends LinearOpMode {
             telemetry.addData("Run Time", runtime.seconds());
             telemetry.addData("oreintation", robotYaw);
             telemetry.addData("target oreintation", targetYaw);
-            telemetry.addData("added movement", output);
-            telemetry.addData("yaw difference", diff);
+            telemetry.addData("added movement", driveTurn);
+
             telemetry.update();
         }
 

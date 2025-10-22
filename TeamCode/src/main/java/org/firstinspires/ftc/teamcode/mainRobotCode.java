@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
 import android.util.Size;
+
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -47,6 +49,9 @@ public class mainRobotCode extends LinearOpMode {
     private DcMotor flyWheelRight = null;
 
 
+    private Servo aimServoleft = null;
+    private Servo aimServoRight = null;
+
 
     @Override
     public void runOpMode() {
@@ -69,6 +74,12 @@ public class mainRobotCode extends LinearOpMode {
         flyWheelRight.setDirection(DcMotor.Direction.FORWARD);
 
 
+        aimServoleft = hardwareMap.get(Servo.class, "Servo1");
+        aimServoRight = hardwareMap.get(Servo.class, "Servo2");
+
+
+
+
 
 
 
@@ -77,9 +88,9 @@ public class mainRobotCode extends LinearOpMode {
 
         boolean flywheelState = false;
 
-        double flyWheelPow = 1;
+        double flyWheelPow = .5;
 
-
+        double servoAngle = 0;
 
 
 
@@ -158,6 +169,13 @@ public class mainRobotCode extends LinearOpMode {
 
 
 
+
+
+
+
+
+            servoAngle += gamepad2.left_stick_y;
+
             if(gamepad2.bWasPressed()){
                 flywheelState = !flywheelState;
             }
@@ -171,11 +189,23 @@ public class mainRobotCode extends LinearOpMode {
                 flyWheelRight.setPower(-0.01);
             }
 
+            if(gamepad2.dpadUpWasPressed())
+                flyWheelPow += .05;
+            else if(gamepad2.dpadDownWasPressed()){
+                flyWheelPow -= .05;
+            }
+            /* sets power to actuators **********************************/
+
+            aimServoleft.setPosition(servoAngle*2);
+            aimServoRight.setPosition(-servoAngle*2);
+
+
 
 
 
             /* telemetry updates ***************************************/
-            telemetryAprilTag();
+            //telemetryAprilTag();
+            telemetry.addData("fly Wheel Power", flyWheelPow);
             telemetry.addData("Status", "Running");
             telemetry.update();
 
