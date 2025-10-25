@@ -84,11 +84,11 @@ public class yawCorrectionTest extends LinearOpMode {
         float driveTurn = 0;
 
 
-        double targetYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double targetYaw = 0;
 
         float tolerance = 10;
 
-
+        double robotYaw;
 
 
 
@@ -101,15 +101,22 @@ public class yawCorrectionTest extends LinearOpMode {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         while (opModeIsActive()) {
 
-            double robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            if(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) < 0){
+                robotYaw = Math.abs(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+                robotYaw += 180;
+
+            }
+            else{ robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);}
 
 
 
 
 
 
-            if(gamepad1.dpadUpWasPressed()) tolerance += 0.1F;
-            else if (gamepad1.dpadDownWasPressed()) tolerance -= 0.1F;
+
+
+            if(gamepad1.dpadUpWasPressed()) tolerance += 1;
+            else if (gamepad1.dpadDownWasPressed()) tolerance -= 1;
 
             if (gamepad1.aWasPressed()){ targetYaw += 45;}
             else if (gamepad1.bWasPressed()) targetYaw -= 45;
@@ -123,24 +130,24 @@ public class yawCorrectionTest extends LinearOpMode {
             telemetry.update();
             //gyro correction
             if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw){
-                double diff = Math.abs(robotYaw-targetYaw);
+                double diff = robotYaw -targetYaw;
 
                 diff /= 500;
 
+                diff = Math.max(-0.5, Math.min(diff, 0.5));
 
 
-                if(robotYaw > .5){
-                    diff = .5;
-                } else if (diff < -.5) {
-                    diff = -.5;
-                }
 
-                if(robotYaw <=0){
-                    driveTurn += (float) diff;
+                driveTurn += (float) diff;
 
-                } else driveTurn -= (float) diff;
+
             }
             else{driveTurn = 0;}
+
+
+
+
+
 
 
 
@@ -185,6 +192,7 @@ public class yawCorrectionTest extends LinearOpMode {
             telemetry.addData("oreintation", robotYaw);
             telemetry.addData("target oreintation", targetYaw);
             telemetry.addData("added movement", driveTurn);
+            telemetry.addData("Tolerance", tolerance);
 
             telemetry.update();
         }
