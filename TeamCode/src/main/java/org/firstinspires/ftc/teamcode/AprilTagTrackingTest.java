@@ -1,9 +1,15 @@
 package org.firstinspires.ftc.teamcode;
 
 import android.util.Size;
+
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -40,9 +46,37 @@ import java.util.List;
 
 //@Disabled
 
-@TeleOp(name = "aprilTagCameraTest", group = "Linear Opmode")
+@TeleOp(name = "AprilTagTrackingTest", group = "Linear Opmode")
 
-public class AprilTagCameraTest extends LinearOpMode {
+public class AprilTagTrackingTest extends LinearOpMode {
+
+
+    static RevHubOrientationOnRobot.LogoFacingDirection[] logoFacingDirections
+            = RevHubOrientationOnRobot.LogoFacingDirection.values();
+    static RevHubOrientationOnRobot.UsbFacingDirection[] usbFacingDirections
+            = RevHubOrientationOnRobot.UsbFacingDirection.values();
+    static int LAST_DIRECTION = logoFacingDirections.length - 1;
+    static float TRIGGER_THRESHOLD = 0.2f;
+
+    IMU imu;
+    int logoFacingDirectionPosition;
+    int usbFacingDirectionPosition;
+    boolean orientationIsValid = true;
+
+
+
+
+    // Declare OpMode members for each of the 4 motors.
+    private ElapsedTime runtime = new ElapsedTime();
+    private DcMotor frontLeftDrive = null;
+    private DcMotor backLeftDrive = null;
+    private DcMotor frontRightDrive = null;
+    private DcMotor backRightDrive = null;
+
+
+
+
+
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
@@ -56,8 +90,60 @@ public class AprilTagCameraTest extends LinearOpMode {
      */
     private VisionPortal visionPortal;
 
+
+
+
+
+
     @Override
     public void runOpMode() {
+
+
+        imu = hardwareMap.get(IMU.class, "imu");
+        logoFacingDirectionPosition = 0; // Up
+        usbFacingDirectionPosition = 2; // Forward
+
+
+
+
+
+
+
+        frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeftDrive");
+        backLeftDrive = hardwareMap.get(DcMotor.class, "backLeftDrive");
+        frontRightDrive = hardwareMap.get(DcMotor.class, "frontRightDrive");
+        backRightDrive = hardwareMap.get(DcMotor.class, "backRightDrive");
+
+        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+
+        frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+
+
+
+        float driveX = 0;
+        float driveY = 0;
+        float driveTurn = 0;
+
+
+        double targetYaw = 0;
+
+        float tolerance = 10;
+
+        double robotYaw = 0;
+
+        double diff = 0;
+
+
+
+
 
         initAprilTag();
 
@@ -71,6 +157,71 @@ public class AprilTagCameraTest extends LinearOpMode {
             while (opModeIsActive()) {
 
 
+                telemetry.update();
+                //gyro correction
+                if(gamepad1.a){
+                    diff = aprilTagYaw();
+
+                    diff /= 5000;
+
+                    diff = Math.max(-0.5, Math.min(diff, 0.5));
+
+
+
+                    driveTurn += (float) diff;
+
+
+                }
+                else{driveTurn = 0;}
+
+
+
+
+
+
+
+
+
+                double max;
+
+                // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
+                double axial   = -driveY;  // Note: pushing stick forward gives negative value
+                double lateral =  driveX;
+                double yaw     =  driveTurn;
+
+                // Combine the joystick requests for each axis-motion to determine each wheel's power.
+                // Set up a variable for each drive wheel to save the power level for telemetry.
+                double frontLeftPower  = axial + lateral + yaw;
+                double frontRightPower = axial - lateral - yaw;
+                double backLeftPower   = axial - lateral + yaw;
+                double backRightPower  = axial + lateral - yaw;
+
+                // Normalize the values so no wheel power exceeds 100%
+                // This ensures that the robot maintains the desired motion.
+                max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
+                max = Math.max(max, Math.abs(backLeftPower));
+                max = Math.max(max, Math.abs(backRightPower));
+
+                if (max > 1.0) {
+                    frontLeftPower  /= max;
+                    frontRightPower /= max;
+                    backLeftPower   /= max;
+                    backRightPower  /= max;
+                }
+
+                // Send calculated power to wheels
+                frontLeftDrive.setPower(frontLeftPower);
+                frontRightDrive.setPower(frontRightPower);
+                backLeftDrive.setPower(backLeftPower);
+                backRightDrive.setPower(backRightPower);
+
+
+
+
+
+
+
+
 
 
 
@@ -78,23 +229,6 @@ public class AprilTagCameraTest extends LinearOpMode {
 
                 // Push telemetry to the Driver Station.
                 telemetry.update();
-
-                // Save CPU resources; can resume streaming when needed.
-                /*
-                if (gamepad1.dpad_down) {
-                    visionPortal.stopStreaming();
-                } else if (gamepad1.dpad_up) {
-                    visionPortal.resumeStreaming();
-                }
-                */
-
-
-
-
-
-
-
-
 
             }
         }
@@ -171,35 +305,6 @@ public class AprilTagCameraTest extends LinearOpMode {
         visionPortal.setProcessorEnabled(aprilTag, true);
 
     }   // end method initAprilTag()
-
-
-    /**
-     * Add telemetry about AprilTag detections.
-     */
-    private void telemetryAprilTag() {
-
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-        telemetry.addData("# AprilTags Detected", currentDetections.size());
-
-        // Step through the list of detections and display info for each one.
-        for (AprilTagDetection detection : currentDetections) {
-            if (detection.metadata != null) {
-                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
-                telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
-                telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
-            } else {
-                telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
-                telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
-            }
-        }   // end for() loop
-
-        // Add "key" information to telemetry
-        telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
-        telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
-        telemetry.addLine("RBE = Range, Bearing & Elevation");
-
-    }   // end method telemetryAprilTag()
 
     public Double aprilTagYaw() {
 

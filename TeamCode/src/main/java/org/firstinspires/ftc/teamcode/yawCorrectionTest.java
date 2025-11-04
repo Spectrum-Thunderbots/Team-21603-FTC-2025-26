@@ -68,10 +68,10 @@ public class yawCorrectionTest extends LinearOpMode {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
-
-
-
-
+        frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
 
@@ -88,9 +88,9 @@ public class yawCorrectionTest extends LinearOpMode {
 
         float tolerance = 10;
 
-        double robotYaw;
+        double robotYaw = 0;
 
-
+        double diff = 0;
 
 
         // Wait for the game to start (driver presses START)
@@ -101,12 +101,7 @@ public class yawCorrectionTest extends LinearOpMode {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         while (opModeIsActive()) {
 
-            if(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) < 0){
-                robotYaw = Math.abs(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
-                robotYaw += 180;
-
-            }
-            else{ robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);}
+            robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
 
 
@@ -130,7 +125,7 @@ public class yawCorrectionTest extends LinearOpMode {
             telemetry.update();
             //gyro correction
             if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw){
-                double diff = robotYaw -targetYaw;
+                diff = robotYaw -targetYaw;
 
                 diff /= 500;
 
@@ -190,6 +185,7 @@ public class yawCorrectionTest extends LinearOpMode {
             // Show the elapsed game time
             telemetry.addData("Run Time", runtime.seconds());
             telemetry.addData("oreintation", robotYaw);
+            telemetry.addData("difference", diff);
             telemetry.addData("target oreintation", targetYaw);
             telemetry.addData("added movement", driveTurn);
             telemetry.addData("Tolerance", tolerance);
@@ -197,10 +193,10 @@ public class yawCorrectionTest extends LinearOpMode {
             telemetry.update();
         }
 
-
-
-
     }
 
-
 }
+
+
+
+
