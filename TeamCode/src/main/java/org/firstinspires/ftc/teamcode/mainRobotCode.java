@@ -86,6 +86,22 @@ public class mainRobotCode extends LinearOpMode {
         initAprilTag();
 
 
+        float driveX = 0;
+        float driveY = 0;
+        float driveTurn = 0;
+
+
+        double targetYaw = 0;
+
+        float tolerance = 10;
+
+        double robotYaw = 0;
+
+        double diff = 0;
+
+
+
+
         boolean flywheelState = false;
 
         double flyWheelPow = .5;
@@ -102,12 +118,94 @@ public class mainRobotCode extends LinearOpMode {
         /* run until the end of the match (driver presses STOP) ********************************************************************************************/
         while (opModeIsActive()) {
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            telemetry.update();
+            //gyro correction
+            if(gamepad1.a){
+                diff = aprilTagBearing();
+
+                diff /= 5000;
+
+                diff = Math.max(-0.5, Math.min(diff, 0.5));
+
+
+
+                driveTurn += (float) diff;
+
+
+            } // enable april tag traking
+
+            else if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw){
+                diff = robotYaw -targetYaw;
+
+                diff /= 500;
+
+                diff = Math.max(-0.5, Math.min(diff, 0.5));
+
+
+
+                driveTurn += (float) diff;
+
+
+            } // yaw correction code
+
+            targetYaw += gamepad1.right_stick_x/2;
+
+            if (targetYaw != (Math.max(-180, Math.min(targetYaw, 180)))){
+
+                if (targetYaw > 180){
+
+                    targetYaw -=360;
+
+                }
+                else{
+
+                    targetYaw += 360;
+
+                }
+
+        } // locks target yaw to valid value
+
+
+
+
+
+
+
+
+           /* ***********************************************************************************************************************************************/
+
+            driveX += gamepad1.left_stick_x;
+            driveY += gamepad1.left_stick_y;
+
+
             double max;
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double lateral =  gamepad1.left_stick_x;
-            double yaw     =  gamepad1.right_stick_x;
+            double axial   = -driveTurn;  // Note: pushing stick forward gives negative value
+            double lateral =  driveX;
+            double yaw     =  driveY;
 
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
@@ -134,6 +232,10 @@ public class mainRobotCode extends LinearOpMode {
             frontRightDrive.setPower(frontRightPower);
             backLeftDrive.setPower(backLeftPower);
             backRightDrive.setPower(backRightPower);
+
+            driveTurn = 0;
+            driveX = 0;
+            driveY = 0;
             /* driving code above *********************************************************************************/
 
 
@@ -143,12 +245,7 @@ public class mainRobotCode extends LinearOpMode {
 
 
 
-            if (gamepad1.dpad_down) {
-                visionPortal.stopStreaming();
-            } else if (gamepad1.dpad_up) {
-                visionPortal.resumeStreaming();
-            }
-            /* camera on/off *******************************************/
+
 
 
 
@@ -299,6 +396,24 @@ public class mainRobotCode extends LinearOpMode {
         telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
 
 
+    }
+
+    public Double aprilTagBearing() {
+
+        double bearingIn =0;
+
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+
+        for (AprilTagDetection detection : currentDetections) {
+            if (detection.metadata != null) {
+                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                bearingIn = detection.ftcPose.bearing;
+
+            }
+        }
+
+
+        return bearingIn;
     }
 }
 

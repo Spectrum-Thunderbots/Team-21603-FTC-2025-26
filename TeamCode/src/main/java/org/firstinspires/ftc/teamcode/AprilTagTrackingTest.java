@@ -19,30 +19,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.List;
 
-/*
- * This OpMode illustrates the basics of AprilTag recognition and pose estimation,
- * including Java Builder structures for specifying Vision parameters.
- *
- * For an introduction to AprilTags, see the FTC-DOCS link below:
- * https://ftc-docs.firstinspires.org/en/latest/apriltag/vision_portal/apriltag_intro/apriltag-intro.html
- *
- * In this sample, any visible tag ID will be detected and displayed, but only tags that are included in the default
- * "TagLibrary" will have their position and orientation information displayed.  This default TagLibrary contains
- * the current Season's AprilTags and a small set of "test Tags" in the high number range.
- *
- * When an AprilTag in the TagLibrary is detected, the SDK provides location and orientation of the tag, relative to the camera.
- * This information is provided in the "ftcPose" member of the returned "detection", and is explained in the ftc-docs page linked below.
- * https://ftc-docs.firstinspires.org/apriltag-detection-values
- *
- * To experiment with using AprilTags to navigate, try out these two driving samples:
- * RobotAutoDriveToAprilTagOmni and RobotAutoDriveToAprilTagTank
- *
- * There are many "default" VisionPortal and AprilTag configuration parameters that may be overridden if desired.
- * These default parameters are shown as comments in the code below.
- *
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
- */
+
 
 //@Disabled
 
@@ -160,7 +137,7 @@ public class AprilTagTrackingTest extends LinearOpMode {
                 telemetry.update();
                 //gyro correction
                 if(gamepad1.a){
-                    diff = aprilTagYaw();
+                    diff = aprilTagBearing();
 
                     diff /= 5000;
 
@@ -225,7 +202,7 @@ public class AprilTagTrackingTest extends LinearOpMode {
 
 
 
-                telemetry.addData("aprilYaw", aprilTagYaw());
+                telemetry.addData("aprilYaw", aprilTagBearing());
 
                 // Push telemetry to the Driver Station.
                 telemetry.update();
@@ -306,22 +283,22 @@ public class AprilTagTrackingTest extends LinearOpMode {
 
     }   // end method initAprilTag()
 
-    public Double aprilTagYaw() {
+    public Double aprilTagBearing() {
 
-        double yawIn =0;
+        double bearingIn =0;
 
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
 
         for (AprilTagDetection detection : currentDetections) {
             if (detection.metadata != null) {
                 telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                yawIn = detection.ftcPose.yaw;
+                bearingIn = detection.ftcPose.bearing;
 
             }
         }
 
 
-        return yawIn;
+        return bearingIn;
     }
 
 }   // end class

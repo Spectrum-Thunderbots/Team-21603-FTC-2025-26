@@ -98,6 +98,7 @@ public class yawCorrectionTest extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
+        imu.resetYaw();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         while (opModeIsActive()) {
 
@@ -115,6 +116,32 @@ public class yawCorrectionTest extends LinearOpMode {
 
             if (gamepad1.aWasPressed()){ targetYaw += 45;}
             else if (gamepad1.bWasPressed()) targetYaw -= 45;
+
+            if (gamepad1.b) targetYaw = 0;
+
+            if (gamepad1.right_stick_x != 0){
+
+                targetYaw += gamepad1.right_stick_x/2;
+
+                if (targetYaw != (Math.max(-180, Math.min(targetYaw, 180)))){
+
+                    if (targetYaw > 180){
+
+                        targetYaw -=360;
+
+                    }
+                    else{
+
+                        targetYaw += 360;
+
+                    }
+
+                }
+
+
+
+
+            }
 
 
 
