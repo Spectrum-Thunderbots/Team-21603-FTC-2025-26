@@ -51,7 +51,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 
 //@Disabled
-@Autonomous(name="Start Close", group="Linear OpMode")
+@Autonomous(name="Start Close Red", group="Linear OpMode")
 
 public class closeParkRed extends LinearOpMode {
 
