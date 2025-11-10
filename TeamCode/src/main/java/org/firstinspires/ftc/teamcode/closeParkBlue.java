@@ -27,6 +27,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+// autonomus expecting a disitance sensor on the left right and back with the camera on the launcher, robot starting facing back towards the wall
+
 package org.firstinspires.ftc.teamcode;
 
 
@@ -38,6 +40,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -67,7 +70,7 @@ public class closeParkBlue extends LinearOpMode {
      */
     private VisionPortal visionPortal;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     static RevHubOrientationOnRobot.LogoFacingDirection[] logoFacingDirections
             = RevHubOrientationOnRobot.LogoFacingDirection.values();
@@ -82,12 +85,14 @@ public class closeParkBlue extends LinearOpMode {
     boolean orientationIsValid = true;
 
 
-    private DistanceSensor frontSensorDistance;
+    private DistanceSensor leftSensorDistance;
+    private DistanceSensor rightSensorDistance;
+    private DistanceSensor backSensorDistance;
 
 
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
@@ -99,9 +104,9 @@ public class closeParkBlue extends LinearOpMode {
 
     private DcMotor flyWheelLeft = null;
     private DcMotor flyWheelRight = null;
-    
-    
-    
+    private Servo leftShooter = null;
+    private Servo rightShooter = null;
+
     @Override
     public void runOpMode() {
 
@@ -110,9 +115,9 @@ public class closeParkBlue extends LinearOpMode {
         usbFacingDirectionPosition = 2; // Forward
 
 
-        frontSensorDistance = hardwareMap.get(DistanceSensor.class, "distance_Sensor0");
-
-
+        leftSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor0");
+        rightSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor1");
+        backSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor2");
 
 
 
@@ -128,12 +133,21 @@ public class closeParkBlue extends LinearOpMode {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        
+
         flyWheelLeft = hardwareMap.get(DcMotor.class, "Motor0");
         flyWheelRight = hardwareMap.get(DcMotor.class, "Motor1");
 
         flyWheelLeft.setDirection(DcMotor.Direction.REVERSE);
         flyWheelRight.setDirection(DcMotor.Direction.FORWARD);
+
+        flyWheelLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        flyWheelRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        leftShooter = hardwareMap.get(Servo.class, "Servo0");
+        rightShooter = hardwareMap.get(Servo.class, "Servo1");
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -142,8 +156,9 @@ public class closeParkBlue extends LinearOpMode {
         initAprilTag();
 
         boolean flywheelState = false;
+
         double flyWheelPow = 0;
-        
+
 
         float driveX = 0;
         float driveY = 0;
@@ -156,8 +171,13 @@ public class closeParkBlue extends LinearOpMode {
 
         int step = 0;
 
+        double diff;
 
+        boolean oreintationMovement = true;
 
+        double launcherAngle = 0;
+
+        String currentStepDescription = "ERROR";
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
@@ -165,7 +185,7 @@ public class closeParkBlue extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
-
+        imu.resetYaw();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         while (opModeIsActive()) {
 
@@ -175,34 +195,80 @@ public class closeParkBlue extends LinearOpMode {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-            if (step == 0) {
-
-                flywheelState = false;
-
-                flyWheelPow = 0;
-
+            if (step == 1) {
                 targetYaw = 0;
 
-                driveX = -.2F;
+                driveY = .2F;
 
-                if(frontSensorDistance.getDistance(DistanceUnit.MM) >= 650) // insert statment that shows when step 0 is done
-                {
-                    step = 1;
+                currentStepDescription = "move away from wall";
+
+
+                if (backSensorDistance.getDistance(DistanceUnit.MM) >= 640) {
+                    step = 2;
+                    driveY = 0;
+                }
+
+            }
+            else if (step == 2) {
+
+                currentStepDescription = "move left or right towards the shooting spot";
+
+
+                if (rightSensorDistance.getDistance(DistanceUnit.MM) <= 765) {
+                    driveX = .2F;
+                } else if (rightSensorDistance.getDistance(DistanceUnit.MM) >= 770) {
+                    driveX = -.2F;
+                } else {
+                    step = 3;
+                    driveX = 0;
+                }
+
+            }
+            else if (step == 3) {
+
+
+                currentStepDescription = "turn towards the april tag";
+
+                targetYaw = -126;
+                if(targetYaw == robotYaw+tolerance || targetYaw == robotYaw-tolerance) step = 4;
+
+            }
+            else if (step == 4){
+
+
+
+                currentStepDescription = "aim exactly towards the april tag and prepare to shoot";
+
+                oreintationMovement = false;
+
+                diff = aprilTagBearing();
+
+                diff /= 5000;
+
+                diff = Math.max(-0.5, Math.min(diff, 0.5));
+
+
+
+                driveTurn += (float) diff;
+
+                flywheelState = true;
+
+                flyWheelPow = .25;
+
+                if(aprilTagBearing() == 0.067){
+                    step = 5;
+                    oreintationMovement = true;
                 }
 
 
             }
-            else if (step == 1) {
+            else if (step == 5){
 
-                flywheelState = true;
+                currentStepDescription = "Start launching balls";
 
-                flyWheelPow = .75;
+                //start launching balls
 
-                targetYaw = 0;
 
-                driveX = 0;
-
-                //START LAUNCHING BALLS
             }
             else {
                 stop();
@@ -220,37 +286,39 @@ public class closeParkBlue extends LinearOpMode {
 
 
             //gyro correction
-            if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw){
-                double diff = targetYaw-robotYaw;
+            telemetry.update();
+            //gyro correction
 
-                double output;
+            if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw && oreintationMovement){
 
+                diff = robotYaw -targetYaw;
 
-                diff /= 10;
+                diff /= 500;
 
-                output = diff/10;
-
-                if(output > 1){
-                    output = 1;
-                } else if (output < -1) {
-                    output = -1;
-                }
+                diff = Math.max(-0.5, Math.min(diff, 0.5));
 
 
-                driveTurn += (float) output;
+
+                driveTurn += (float) diff;
+
 
             }
+            else{driveTurn = 0;}
 
 
 
-                if(flywheelState == true) {
-                    flyWheelLeft.setPower(flyWheelPow);
-                    flyWheelRight.setPower(flyWheelPow);
-                }
-                else {
-                    flyWheelLeft.setPower(-0.01);
-                    flyWheelRight.setPower(-0.01);
-                }
+
+            if(flywheelState == true) {
+                flyWheelLeft.setPower(flyWheelPow);
+                flyWheelRight.setPower(flyWheelPow);
+            }
+            else {
+                flyWheelLeft.setPower(0);
+                flyWheelRight.setPower(0);
+            }
+
+            leftShooter.setPosition(2*launcherAngle);
+            rightShooter.setPosition(2*launcherAngle);
 
             autoDrive(driveX, driveY, driveTurn);
 
@@ -258,10 +326,9 @@ public class closeParkBlue extends LinearOpMode {
 
             // Show the elapsed game time
             telemetry.addData("Run Time", runtime.seconds());
-            telemetry.addData("Front Dis sensor", frontSensorDistance.getDistance(DistanceUnit.MM));
             telemetry.addData("oreintation", robotYaw);
             telemetry.addData("target oreintation", targetYaw);
-            telemetryAprilTag();
+            telemetry.addLine(currentStepDescription);
             telemetry.update();
         }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -393,5 +460,24 @@ public class closeParkBlue extends LinearOpMode {
         telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
 
 
+    }
+
+    public Double aprilTagBearing() {
+
+        double bearingIn = 0.067;
+
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+
+        for (AprilTagDetection detection : currentDetections) {
+            if (detection.metadata != null) {
+                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                if (detection.id == 20 ) {
+                    bearingIn = detection.ftcPose.bearing;
+                }
+            }
+        }
+
+
+        return bearingIn;
     }
 }
