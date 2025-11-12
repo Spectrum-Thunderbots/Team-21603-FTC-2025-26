@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 import android.util.Size;
 
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -51,6 +53,14 @@ public class mainRobotCode extends LinearOpMode {
 
     private Servo aimServoleft = null;
     private Servo aimServoRight = null;
+    private CRServo pusherServo = null;
+
+
+
+    private DistanceSensor leftSensorDistance;
+    private DistanceSensor rightSensorDistance;
+    private DistanceSensor backSensorDistance;
+
 
 
     @Override
@@ -67,37 +77,47 @@ public class mainRobotCode extends LinearOpMode {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
+
+
         flyWheelLeft = hardwareMap.get(DcMotor.class, "Motor0");
         flyWheelRight = hardwareMap.get(DcMotor.class, "Motor1");
 
         flyWheelLeft.setDirection(DcMotor.Direction.REVERSE);
         flyWheelRight.setDirection(DcMotor.Direction.FORWARD);
 
-
-        aimServoleft = hardwareMap.get(Servo.class, "Servo1");
-        aimServoRight = hardwareMap.get(Servo.class, "Servo2");
-
+        flyWheelLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        flyWheelRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
 
+        aimServoleft = hardwareMap.get(Servo.class, "Servo0");
+        aimServoRight = hardwareMap.get(Servo.class, "Servo1");
+
+        pusherServo = hardwareMap.get(CRServo.class, "Servo2");
+
+
+
+        backSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor0");
+        rightSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor1");
+        leftSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor2");
 
 
 
         initAprilTag();
 
 
-        float driveX = 0;
-        float driveY = 0;
+        float driveX;
+        float driveY;
         float driveTurn = 0;
 
 
         double targetYaw = 0;
 
-        float tolerance = 10;
+        float tolerance = 1;
 
         double robotYaw = 0;
 
-        double diff = 0;
+        double diff;
 
 
 
@@ -142,7 +162,7 @@ public class mainRobotCode extends LinearOpMode {
 
             telemetry.update();
             //gyro correction
-            if(gamepad1.a){
+            if(gamepad2.a){
                 diff = aprilTagBearing();
 
                 diff /= 5000;
@@ -157,6 +177,22 @@ public class mainRobotCode extends LinearOpMode {
             } // enable april tag traking
 
             else if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw){
+
+                if (targetYaw != (Math.max(-180, Math.min(targetYaw, 180)))){
+
+                    if (targetYaw > 180){
+
+                        targetYaw -=360;
+
+                    }
+                    else{
+
+                        targetYaw += 360;
+
+                    }
+
+                } // locks target yaw to valid value
+
                 diff = robotYaw -targetYaw;
 
                 diff /= 500;
@@ -172,20 +208,7 @@ public class mainRobotCode extends LinearOpMode {
 
             targetYaw += gamepad1.right_stick_x/2;
 
-            if (targetYaw != (Math.max(-180, Math.min(targetYaw, 180)))){
 
-                if (targetYaw > 180){
-
-                    targetYaw -=360;
-
-                }
-                else{
-
-                    targetYaw += 360;
-
-                }
-
-        } // locks target yaw to valid value
 
 
 
@@ -196,8 +219,8 @@ public class mainRobotCode extends LinearOpMode {
 
            /* ***********************************************************************************************************************************************/
 
-            driveX += gamepad1.left_stick_x;
-            driveY += gamepad1.left_stick_y;
+            driveX = gamepad1.left_stick_x;
+            driveY = gamepad1.left_stick_y;
 
 
             double max;
@@ -233,10 +256,10 @@ public class mainRobotCode extends LinearOpMode {
             backLeftDrive.setPower(backLeftPower);
             backRightDrive.setPower(backRightPower);
 
-            driveTurn = 0;
-            driveX = 0;
-            driveY = 0;
             /* driving code above *********************************************************************************/
+
+            pusherServo.setPower(gamepad2.left_stick_y);
+
 
 
 
@@ -282,8 +305,8 @@ public class mainRobotCode extends LinearOpMode {
                 flyWheelRight.setPower(flyWheelPow);
             }
             else {
-                flyWheelLeft.setPower(-0.01);
-                flyWheelRight.setPower(-0.01);
+                flyWheelLeft.setPower(0);
+                flyWheelRight.setPower(0);
             }
 
             if(gamepad2.dpadUpWasPressed())
@@ -406,9 +429,9 @@ public class mainRobotCode extends LinearOpMode {
 
         for (AprilTagDetection detection : currentDetections) {
             if (detection.metadata != null) {
-                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                bearingIn = detection.ftcPose.bearing;
-
+                if(detection.id == 20 || detection.id == 24) {
+                    bearingIn = detection.ftcPose.bearing;
+                }
             }
         }
 

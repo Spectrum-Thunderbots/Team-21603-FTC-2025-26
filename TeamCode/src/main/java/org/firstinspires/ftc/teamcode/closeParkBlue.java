@@ -104,8 +104,8 @@ public class closeParkBlue extends LinearOpMode {
 
     private DcMotor flyWheelLeft = null;
     private DcMotor flyWheelRight = null;
-    private Servo leftShooter = null;
-    private Servo rightShooter = null;
+    private Servo aimServoLeft = null;
+    private Servo aimServoRight = null;
 
     @Override
     public void runOpMode() {
@@ -143,8 +143,8 @@ public class closeParkBlue extends LinearOpMode {
         flyWheelLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         flyWheelRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        leftShooter = hardwareMap.get(Servo.class, "Servo0");
-        rightShooter = hardwareMap.get(Servo.class, "Servo1");
+        aimServoLeft = hardwareMap.get(Servo.class, "Servo0");
+        aimServoRight = hardwareMap.get(Servo.class, "Servo1");
 
 
 
@@ -317,8 +317,8 @@ public class closeParkBlue extends LinearOpMode {
                 flyWheelRight.setPower(0);
             }
 
-            leftShooter.setPosition(2*launcherAngle);
-            rightShooter.setPosition(2*launcherAngle);
+            aimServoLeft.setPosition(2*launcherAngle);
+            aimServoRight.setPosition(2*launcherAngle);
 
             autoDrive(driveX, driveY, driveTurn);
 

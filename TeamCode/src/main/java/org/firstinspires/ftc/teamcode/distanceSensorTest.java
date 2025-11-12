@@ -57,7 +57,7 @@ public class distanceSensorTest extends LinearOpMode {
     @Override
     public void runOpMode() {
         // you can use this as a regular DistanceSensor.
-        frontSensorDistance = hardwareMap.get(DistanceSensor.class, "distance_Sensor0");
+        frontSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor0");
 
 
 
