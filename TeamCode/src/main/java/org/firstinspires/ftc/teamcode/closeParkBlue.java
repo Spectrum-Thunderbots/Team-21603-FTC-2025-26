@@ -115,9 +115,9 @@ public class closeParkBlue extends LinearOpMode {
         usbFacingDirectionPosition = 2; // Forward
 
 
-        leftSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor0");
+        leftSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor2");
         rightSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor1");
-        backSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor2");
+        backSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor0");
 
 
 
