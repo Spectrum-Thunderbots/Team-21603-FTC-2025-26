@@ -42,7 +42,7 @@ import com.qualcomm.robotcore.hardware.SwitchableLight;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 @TeleOp(name = "colorSensortest", group = "Linear OpMode")
-//@Disabled
+@Disabled
 public class colorSensorTest extends LinearOpMode {
 
     /** The colorSensor field will contain a reference to our color sensor hardware object */

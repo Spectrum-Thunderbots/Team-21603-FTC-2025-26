@@ -1,26 +1,35 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.util.Size;
-
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-
+import android.util.Size;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import java.util.List;
 
+/**
+ * Control scheme
+ *     gamepad1:
+ *     -left stick: moving forwards backwards left right
+ *     -right stick: turning
+ *
+ *     gamepad2:
+ *     -a: override turning to lock onto an april tag
+ *     -x: activate ball pushers
+ *     -b: turns on/off the flywheels
+ *     -dpad up/down: changes the flywheel power
+ *     -left Stick Y: changes launcher angle
+ */
 
 //@Disabled
 @TeleOp
@@ -29,14 +38,9 @@ public class mainRobotCode extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
-    /**
-     * The variable to store our instance of the AprilTag processor.
-     */
+
     private AprilTagProcessor aprilTag;
 
-    /**
-     * The variable to store our instance of the vision portal.
-     */
     private VisionPortal visionPortal;
 
 
@@ -53,9 +57,9 @@ public class mainRobotCode extends LinearOpMode {
 
     private Servo aimServoleft = null;
     private Servo aimServoRight = null;
-    private CRServo pusherServo = null;
 
-
+    private CRServo pusherServo1 = null;
+    private CRServo pusherServo2 = null;
 
     private DistanceSensor leftSensorDistance;
     private DistanceSensor rightSensorDistance;
@@ -67,10 +71,10 @@ public class mainRobotCode extends LinearOpMode {
     public void runOpMode() {
 
 
-        frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeftDrive");
-        backLeftDrive = hardwareMap.get(DcMotor.class, "backLeftDrive");
-        frontRightDrive = hardwareMap.get(DcMotor.class, "frontRightDrive");
-        backRightDrive = hardwareMap.get(DcMotor.class, "backRightDrive");
+        frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeftDrive");//port 0
+        backLeftDrive = hardwareMap.get(DcMotor.class, "backLeftDrive");//port 1
+        frontRightDrive = hardwareMap.get(DcMotor.class, "frontRightDrive");//port 2
+        backRightDrive = hardwareMap.get(DcMotor.class, "backRightDrive");//port 3
 
         frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -79,22 +83,26 @@ public class mainRobotCode extends LinearOpMode {
 
 
 
-        flyWheelLeft = hardwareMap.get(DcMotor.class, "Motor0");
-        flyWheelRight = hardwareMap.get(DcMotor.class, "Motor1");
+        flyWheelLeft = hardwareMap.get(DcMotor.class, "Motor0");//expansion port 0
+        flyWheelRight = hardwareMap.get(DcMotor.class, "Motor1");//expansion port 1
 
         flyWheelLeft.setDirection(DcMotor.Direction.REVERSE);
         flyWheelRight.setDirection(DcMotor.Direction.FORWARD);
+
+
+
+
 
         flyWheelLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         flyWheelRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
 
-        aimServoleft = hardwareMap.get(Servo.class, "Servo0");
-        aimServoRight = hardwareMap.get(Servo.class, "Servo1");
+        aimServoleft = hardwareMap.get(Servo.class, "Servo0");//port 0
+        aimServoRight = hardwareMap.get(Servo.class, "Servo1");//port 1
 
-        pusherServo = hardwareMap.get(CRServo.class, "Servo2");
-
+        pusherServo1 = hardwareMap.get(CRServo.class, "CRServo0");//port 2
+        pusherServo2 = hardwareMap.get(CRServo.class, "CRServo1");//port 3
 
 
         backSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor0");
@@ -126,7 +134,7 @@ public class mainRobotCode extends LinearOpMode {
 
         double flyWheelPow = .5;
 
-        double servoAngle = 0;
+        double servoAngle = .5;
 
 
 
@@ -144,24 +152,6 @@ public class mainRobotCode extends LinearOpMode {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            telemetry.update();
-            //gyro correction
             if(gamepad2.a){
                 diff = aprilTagBearing();
 
@@ -206,16 +196,34 @@ public class mainRobotCode extends LinearOpMode {
 
             } // yaw correction code
 
+            if (gamepad2.x) {
+                pusherServo1.setPower(1);
+                pusherServo2.setPower(1);
+            }
+            else {
+                pusherServo1.setPower(1);
+                pusherServo2.setPower(1);
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             targetYaw += gamepad1.right_stick_x/2;
-
-
-
-
-
-
-
-
-
 
            /* ***********************************************************************************************************************************************/
 
@@ -258,8 +266,6 @@ public class mainRobotCode extends LinearOpMode {
 
             /* driving code above *********************************************************************************/
 
-            pusherServo.setPower(gamepad2.left_stick_y);
-
 
 
 
@@ -300,6 +306,7 @@ public class mainRobotCode extends LinearOpMode {
                 flywheelState = !flywheelState;
             }
 
+
             if(flywheelState) {
                 flyWheelLeft.setPower(flyWheelPow);
                 flyWheelRight.setPower(flyWheelPow);
@@ -309,6 +316,7 @@ public class mainRobotCode extends LinearOpMode {
                 flyWheelRight.setPower(0);
             }
 
+
             if(gamepad2.dpadUpWasPressed())
                 flyWheelPow += .05;
             else if(gamepad2.dpadDownWasPressed()){
@@ -316,8 +324,10 @@ public class mainRobotCode extends LinearOpMode {
             }
             /* sets power to actuators **********************************/
 
-            aimServoleft.setPosition(servoAngle*2);
-            aimServoRight.setPosition(-servoAngle*2);
+            servoAngle = Math.max(0, Math.min(1, servoAngle));
+
+            aimServoleft.setPosition(servoAngle);
+            aimServoRight.setPosition(servoAngle);
 
 
 
@@ -394,7 +404,7 @@ public class mainRobotCode extends LinearOpMode {
         // Disable or re-enable the aprilTag processor at any time.
         visionPortal.setProcessorEnabled(aprilTag, true);
 
-    }   // end method initAprilTag()
+    }
 
     private void telemetryAprilTag() {
 

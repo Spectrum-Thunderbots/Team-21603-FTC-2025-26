@@ -37,6 +37,7 @@ import android.util.Size;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -54,7 +55,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 
 //@Disabled
-@Autonomous(name="Start Close Blue", group="Linear OpMode")
+@Autonomous(name="Start Close Red", group="Linear OpMode")
 
 public class closeParkBlue extends LinearOpMode {
 
@@ -85,13 +86,6 @@ public class closeParkBlue extends LinearOpMode {
     boolean orientationIsValid = true;
 
 
-    private DistanceSensor leftSensorDistance;
-    private DistanceSensor rightSensorDistance;
-    private DistanceSensor backSensorDistance;
-
-
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Declare OpMode members for each of the 4 motors.
@@ -101,11 +95,19 @@ public class closeParkBlue extends LinearOpMode {
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive = null;
 
-
     private DcMotor flyWheelLeft = null;
     private DcMotor flyWheelRight = null;
-    private Servo aimServoLeft = null;
+
+
+    private Servo aimServoleft = null;
     private Servo aimServoRight = null;
+
+    private CRServo pusherServo1 = null;
+    private CRServo pusherServo2 = null;
+
+    private DistanceSensor leftSensorDistance;
+    private DistanceSensor rightSensorDistance;
+    private DistanceSensor backSensorDistance;
 
     @Override
     public void runOpMode() {
@@ -114,14 +116,6 @@ public class closeParkBlue extends LinearOpMode {
         logoFacingDirectionPosition = 0; // Up
         usbFacingDirectionPosition = 2; // Forward
 
-
-        leftSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor2");
-        rightSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor1");
-        backSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor0");
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeftDrive");
         backLeftDrive = hardwareMap.get(DcMotor.class, "backLeftDrive");
@@ -134,6 +128,7 @@ public class closeParkBlue extends LinearOpMode {
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
 
+
         flyWheelLeft = hardwareMap.get(DcMotor.class, "Motor0");
         flyWheelRight = hardwareMap.get(DcMotor.class, "Motor1");
 
@@ -143,8 +138,18 @@ public class closeParkBlue extends LinearOpMode {
         flyWheelLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         flyWheelRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        aimServoLeft = hardwareMap.get(Servo.class, "Servo0");
+
+
+        aimServoleft = hardwareMap.get(Servo.class, "Servo0");
         aimServoRight = hardwareMap.get(Servo.class, "Servo1");
+
+        pusherServo1 = hardwareMap.get(CRServo.class, "Servo2");
+        pusherServo2 = hardwareMap.get(CRServo.class, "Servo3");
+
+
+        backSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor0");
+        rightSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor1");
+        leftSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor2");
 
 
 
@@ -178,6 +183,8 @@ public class closeParkBlue extends LinearOpMode {
         double launcherAngle = 0;
 
         String currentStepDescription = "ERROR";
+
+
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
@@ -215,9 +222,9 @@ public class closeParkBlue extends LinearOpMode {
 
 
                 if (rightSensorDistance.getDistance(DistanceUnit.MM) <= 765) {
-                    driveX = .2F;
-                } else if (rightSensorDistance.getDistance(DistanceUnit.MM) >= 770) {
                     driveX = -.2F;
+                } else if (rightSensorDistance.getDistance(DistanceUnit.MM) >= 770) {
+                    driveX = .2F;
                 } else {
                     step = 3;
                     driveX = 0;
@@ -282,10 +289,10 @@ public class closeParkBlue extends LinearOpMode {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            //sets gyro correction and any actuator power
+            //set gyro correction and any actuator power
 
 
-            //gyro correction
+
             telemetry.update();
             //gyro correction
 
@@ -317,8 +324,8 @@ public class closeParkBlue extends LinearOpMode {
                 flyWheelRight.setPower(0);
             }
 
-            aimServoLeft.setPosition(2*launcherAngle);
-            aimServoRight.setPosition(2*launcherAngle);
+            aimServoleft.setPosition(launcherAngle);
+            aimServoRight.setPosition(launcherAngle);
 
             autoDrive(driveX, driveY, driveTurn);
 

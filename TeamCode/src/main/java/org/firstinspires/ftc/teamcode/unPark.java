@@ -93,13 +93,13 @@ public class unPark extends LinearOpMode {
         while (opModeIsActive()) {
 
 
-            if (step == 0) {
+            if (step == 1) {
 
                 driveY -= .2F;
 
                 if(runtime.seconds() >= 2) // insert statment that shows when step 0 is done
                 {
-                    step = 1;
+                    step = 2;
                 }
 
 

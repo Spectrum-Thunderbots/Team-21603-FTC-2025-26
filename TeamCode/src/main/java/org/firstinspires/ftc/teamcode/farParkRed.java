@@ -1,4 +1,33 @@
+/* Copyright (c) 2017 FIRST. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted (subject to the limitations in the disclaimer below) provided that
+ * the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this list
+ * of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice, this
+ * list of conditions and the following disclaimer in the documentation and/or
+ * other materials provided with the distribution.
+ *
+ * Neither the name of FIRST nor the names of its contributors may be used to endorse or
+ * promote products derived from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
+ * LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
+// autonomus expecting a disitance sensor on the left right and back with the camera on the launcher, robot starting facing back towards the wall
 
 package org.firstinspires.ftc.teamcode;
 
@@ -8,9 +37,11 @@ import android.util.Size;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -40,6 +71,8 @@ public class farParkRed extends LinearOpMode {
      */
     private VisionPortal visionPortal;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     static RevHubOrientationOnRobot.LogoFacingDirection[] logoFacingDirections
             = RevHubOrientationOnRobot.LogoFacingDirection.values();
     static RevHubOrientationOnRobot.UsbFacingDirection[] usbFacingDirections
@@ -52,11 +85,8 @@ public class farParkRed extends LinearOpMode {
     int usbFacingDirectionPosition;
     boolean orientationIsValid = true;
 
-    private DistanceSensor frontSensorDistance;
 
-
-
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
@@ -65,11 +95,19 @@ public class farParkRed extends LinearOpMode {
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive = null;
 
-
     private DcMotor flyWheelLeft = null;
     private DcMotor flyWheelRight = null;
 
 
+    private Servo aimServoleft = null;
+    private Servo aimServoRight = null;
+
+    private CRServo pusherServo1 = null;
+    private CRServo pusherServo2 = null;
+
+    private DistanceSensor leftSensorDistance;
+    private DistanceSensor rightSensorDistance;
+    private DistanceSensor backSensorDistance;
 
     @Override
     public void runOpMode() {
@@ -77,12 +115,6 @@ public class farParkRed extends LinearOpMode {
         imu = hardwareMap.get(IMU.class, "imu");
         logoFacingDirectionPosition = 0; // Up
         usbFacingDirectionPosition = 2; // Forward
-
-        frontSensorDistance = hardwareMap.get(DistanceSensor.class, "distance_Sensor0");
-
-
-
-
 
 
         frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeftDrive");
@@ -96,17 +128,37 @@ public class farParkRed extends LinearOpMode {
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
 
+
         flyWheelLeft = hardwareMap.get(DcMotor.class, "Motor0");
         flyWheelRight = hardwareMap.get(DcMotor.class, "Motor1");
 
         flyWheelLeft.setDirection(DcMotor.Direction.REVERSE);
         flyWheelRight.setDirection(DcMotor.Direction.FORWARD);
 
+        flyWheelLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        flyWheelRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+
+        aimServoleft = hardwareMap.get(Servo.class, "Servo0");
+        aimServoRight = hardwareMap.get(Servo.class, "Servo1");
+
+        pusherServo1 = hardwareMap.get(CRServo.class, "Servo2");
+        pusherServo2 = hardwareMap.get(CRServo.class, "Servo3");
+
+
+        backSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor0");
+        rightSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor1");
+        leftSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor2");
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 
 
         initAprilTag();
-
 
         boolean flywheelState = false;
 
@@ -124,6 +176,13 @@ public class farParkRed extends LinearOpMode {
 
         int step = 0;
 
+        double diff;
+
+        boolean oreintationMovement = true;
+
+        double launcherAngle = 0;
+
+        String currentStepDescription = "ERROR";
 
 
 
@@ -133,25 +192,94 @@ public class farParkRed extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
-
+        imu.resetYaw();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         while (opModeIsActive()) {
 
             double robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
-            if (step == 0) {
-                flyWheelPow = 0;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+            if (step == 1) {
                 targetYaw = 0;
 
-                if(1 < 2) // insert statment that shows when step 0 is done
-                {
-                    step = 1;
+                driveY = .2F;
+
+                currentStepDescription = "move away from wall";
+
+
+                if (backSensorDistance.getDistance(DistanceUnit.MM) >= 100) {
+                    step = 2;
+                    driveY = 0;
+                }
+
+            }
+            else if (step == 2){
+
+                driveX = .2F;
+
+                currentStepDescription = "move right into launch zone";
+
+                if(leftSensorDistance.getDistance(DistanceUnit.MM) >= 1500);
+
+                    step = 3;
+                    driveX = 0;
+            }
+            else if (step == 3){
+
+                targetYaw = -54;
+
+                currentStepDescription = "turn towards target";
+
+                if (driveTurn == 0){
+                    step = 4;
                 }
 
 
             }
-            else if (step == 1) {
+            else if (step == 4){
+                currentStepDescription = "aim exactly towards the april tag and prepare to shoot";
+
+                oreintationMovement = false;
+
+                diff = aprilTagBearing();
+
+                diff /= 5000;
+
+                diff = Math.max(-0.5, Math.min(diff, 0.5));
+
+
+
+                driveTurn += (float) diff;
+
+                flywheelState = true;
+
+                flyWheelPow = .5;
+
+                launcherAngle = .5;
+
+                if(aprilTagBearing() == 0.067){
+                    step = 5;
+
+                    targetYaw = robotYaw;
+
+                    oreintationMovement = true;
+
+                    resetRuntime();
+                }
+            }
+            else if (step == 5){
+
+                currentStepDescription = "Shooting Balls!";
+
+                pusherServo1.setPower(1);
+                pusherServo2.setPower(1);
+
+                if (runtime.seconds() >= 15){
+                    step = 6;
+                }
 
             }
             else {
@@ -159,45 +287,50 @@ public class farParkRed extends LinearOpMode {
             }
 
 
-            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            //sets gyro correction and any actuator power
 
 
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //set gyro correction and any actuator power
+
+
+
+            telemetry.update();
             //gyro correction
-            if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw){
-                double diff = targetYaw-robotYaw;
 
-                double output;
+            if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw && oreintationMovement){
 
+                diff = robotYaw -targetYaw;
 
-                diff /= 10;
+                diff /= 500;
 
-                output = diff/10;
-
-                if(output > 1){
-                    output = 1;
-                } else if (output < -1) {
-                    output = -1;
-                }
+                diff = Math.max(-0.5, Math.min(diff, 0.5));
 
 
-                driveTurn += (float) output;
+
+                driveTurn += (float) diff;
+
 
             }
+            else{driveTurn = 0;}
 
 
 
-            //flywheel state
 
             if(flywheelState == true) {
                 flyWheelLeft.setPower(flyWheelPow);
                 flyWheelRight.setPower(flyWheelPow);
             }
             else {
-                flyWheelLeft.setPower(-0.01);
-                flyWheelRight.setPower(-0.01);
+                flyWheelLeft.setPower(0);
+                flyWheelRight.setPower(0);
             }
 
+            aimServoleft.setPosition(launcherAngle);
+            aimServoRight.setPosition(launcherAngle);
 
             autoDrive(driveX, driveY, driveTurn);
 
@@ -205,12 +338,12 @@ public class farParkRed extends LinearOpMode {
 
             // Show the elapsed game time
             telemetry.addData("Run Time", runtime.seconds());
-            telemetry.addData("Front Dis sensor", frontSensorDistance.getDistance(DistanceUnit.MM));
             telemetry.addData("oreintation", robotYaw);
             telemetry.addData("target oreintation", targetYaw);
-            telemetryAprilTag();
+            telemetry.addLine(currentStepDescription);
             telemetry.update();
         }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -339,5 +472,24 @@ public class farParkRed extends LinearOpMode {
         telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
 
 
+    }
+
+    public Double aprilTagBearing() {
+
+        double bearingIn = 0.067;
+
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+
+        for (AprilTagDetection detection : currentDetections) {
+            if (detection.metadata != null) {
+                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                if (detection.id == 24 ) {
+                    bearingIn = detection.ftcPose.bearing;
+                }
+            }
+        }
+
+
+        return bearingIn;
     }
 }
