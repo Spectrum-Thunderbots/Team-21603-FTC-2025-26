@@ -50,8 +50,8 @@ public class yawCorrectionTest extends LinearOpMode {
     public void runOpMode() {
 
         imu = hardwareMap.get(IMU.class, "imu");
-        logoFacingDirectionPosition = 0; // Up
-        usbFacingDirectionPosition = 2; // Forward
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.LEFT, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
+
 
 
 

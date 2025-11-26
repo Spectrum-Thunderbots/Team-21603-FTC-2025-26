@@ -102,8 +102,8 @@ public class farParkRed extends LinearOpMode {
     private Servo aimServoleft = null;
     private Servo aimServoRight = null;
 
-    private CRServo pusherServo1 = null;
-    private CRServo pusherServo2 = null;
+    private Servo pusherServo1 = null;
+    private Servo pusherServo2 = null;
 
     private DistanceSensor leftSensorDistance;
     private DistanceSensor rightSensorDistance;
@@ -113,8 +113,8 @@ public class farParkRed extends LinearOpMode {
     public void runOpMode() {
 
         imu = hardwareMap.get(IMU.class, "imu");
-        logoFacingDirectionPosition = 0; // Up
-        usbFacingDirectionPosition = 2; // Forward
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.LEFT, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
+
 
 
         frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeftDrive");
@@ -143,8 +143,8 @@ public class farParkRed extends LinearOpMode {
         aimServoleft = hardwareMap.get(Servo.class, "Servo0");
         aimServoRight = hardwareMap.get(Servo.class, "Servo1");
 
-        pusherServo1 = hardwareMap.get(CRServo.class, "Servo2");
-        pusherServo2 = hardwareMap.get(CRServo.class, "Servo3");
+        pusherServo1 = hardwareMap.get(Servo.class, "CRServo0");
+        pusherServo2 = hardwareMap.get(Servo.class, "CRServo1");
 
 
         backSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor0");
@@ -174,13 +174,13 @@ public class farParkRed extends LinearOpMode {
 
         float tolerance = 1;
 
-        int step = 0;
+        int step = 1;
 
         double diff;
 
         boolean oreintationMovement = true;
 
-        double launcherAngle = 0;
+        double launcherAngle = .5;
 
         String currentStepDescription = "ERROR";
 
@@ -205,7 +205,7 @@ public class farParkRed extends LinearOpMode {
             if (step == 1) {
                 targetYaw = 0;
 
-                driveY = .2F;
+                driveY = -.2F;
 
                 currentStepDescription = "move away from wall";
 
@@ -215,141 +215,120 @@ public class farParkRed extends LinearOpMode {
                     driveY = 0;
                 }
 
-            }
-            else if (step == 2){
+            } else if (step == 2) {
 
-                driveX = .2F;
-
-                currentStepDescription = "move right into launch zone";
-
-                if(leftSensorDistance.getDistance(DistanceUnit.MM) >= 1500);
-
-                    step = 3;
-                    driveX = 0;
-            }
-            else if (step == 3){
-
-                targetYaw = -54;
+                targetYaw = -20;
 
                 currentStepDescription = "turn towards target";
 
-                if (driveTurn == 0){
-                    step = 4;
+                if (driveTurn == 0) {
+                    step = 3;
+
+                } else if (step == 3) {
+
+                    flywheelState = true;
+
+                    pusherServo1.setPosition(0);
+                    pusherServo2.setPosition(180);
+                    sleep(100);
+                    pusherServo1.setPosition(180);
+                    pusherServo2.setPosition(0);
+                    sleep(100);
+
+
+
+                } else {
+                    stop();
                 }
-
-
-            }
-            else if (step == 4){
-                currentStepDescription = "aim exactly towards the april tag and prepare to shoot";
-
-                oreintationMovement = false;
-
-                diff = aprilTagBearing();
-
-                diff /= 5000;
-
-                diff = Math.max(-0.5, Math.min(diff, 0.5));
-
-
-
-                driveTurn += (float) diff;
-
-                flywheelState = true;
-
-                flyWheelPow = .5;
-
-                launcherAngle = .5;
-
-                if(aprilTagBearing() == 0.067){
-                    step = 5;
-
-                    targetYaw = robotYaw;
-
-                    oreintationMovement = true;
-
-                    resetRuntime();
-                }
-            }
-            else if (step == 5){
-
-                currentStepDescription = "Shooting Balls!";
-
-                pusherServo1.setPower(1);
-                pusherServo2.setPower(1);
-
-                if (runtime.seconds() >= 15){
-                    step = 6;
-                }
-
-            }
-            else {
-                stop();
-            }
-
-
-
-
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            //set gyro correction and any actuator power
+                //set gyro correction and any actuator power
 
 
+                telemetry.update();
+                //gyro correction
 
-            telemetry.update();
-            //gyro correction
+                if (targetYaw >= robotYaw + tolerance || targetYaw + tolerance <= robotYaw && oreintationMovement) {
 
-            if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw && oreintationMovement){
+                    diff = robotYaw - targetYaw;
 
-                diff = robotYaw -targetYaw;
+                    diff /= 500;
 
-                diff /= 500;
-
-                diff = Math.max(-0.5, Math.min(diff, 0.5));
-
+                    diff = Math.max(-0.5, Math.min(diff, 0.5));
 
 
-                driveTurn += (float) diff;
+                    driveTurn += (float) diff;
 
 
-            }
-            else{driveTurn = 0;}
+                } else {
+                    driveTurn = 0;
+                }
 
 
+                if (flywheelState == true) {
+                    flyWheelLeft.setPower(flyWheelPow);
+                    flyWheelRight.setPower(flyWheelPow);
+                } else {
+                    flyWheelLeft.setPower(0);
+                    flyWheelRight.setPower(0);
+                }
 
+                aimServoleft.setPosition(launcherAngle);
+                aimServoRight.setPosition(launcherAngle);
 
-            if(flywheelState == true) {
-                flyWheelLeft.setPower(flyWheelPow);
-                flyWheelRight.setPower(flyWheelPow);
-            }
-            else {
-                flyWheelLeft.setPower(0);
-                flyWheelRight.setPower(0);
-            }
+                double max;
 
-            aimServoleft.setPosition(launcherAngle);
-            aimServoRight.setPosition(launcherAngle);
+                // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
+                double axial = -driveY;  // Note: pushing stick forward gives negative value
+                double lateral = driveX;
+                double yaw = driveTurn;
 
-            autoDrive(driveX, driveY, driveTurn);
+                // Combine the joystick requests for each axis-motion to determine each wheel's power.
+                // Set up a variable for each drive wheel to save the power level for telemetry.
+                double frontLeftPower = axial + lateral + yaw;
+                double frontRightPower = axial - lateral - yaw;
+                double backLeftPower = axial - lateral + yaw;
+                double backRightPower = axial + lateral - yaw;
+
+                // Normalize the values so no wheel power exceeds 100%
+                // This ensures that the robot maintains the desired motion.
+                max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
+                max = Math.max(max, Math.abs(backLeftPower));
+                max = Math.max(max, Math.abs(backRightPower));
+
+                if (max > 1.0) {
+                    frontLeftPower /= max;
+                    frontRightPower /= max;
+                    backLeftPower /= max;
+                    backRightPower /= max;
+                }
+
+                // Send calculated power to wheels
+                frontLeftDrive.setPower(frontLeftPower);
+                frontRightDrive.setPower(frontRightPower);
+                backLeftDrive.setPower(backLeftPower);
+                backRightDrive.setPower(backRightPower);
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            // Show the elapsed game time
-            telemetry.addData("Run Time", runtime.seconds());
-            telemetry.addData("oreintation", robotYaw);
-            telemetry.addData("target oreintation", targetYaw);
-            telemetry.addLine(currentStepDescription);
-            telemetry.update();
+                // Show the elapsed game time
+                telemetry.addData("Run Time", runtime.seconds());
+                telemetry.addData("left Sens", leftSensorDistance.getDistance(DistanceUnit.MM));
+                telemetry.addData("right sens", rightSensorDistance.getDistance(DistanceUnit.MM));
+                telemetry.addData("backsens", backSensorDistance.getDistance(DistanceUnit.MM));
+                telemetry.addData("oreintation", robotYaw);
+                telemetry.addData("target oreintation", targetYaw);
+                telemetry.addLine(currentStepDescription);
+                telemetry.update();
+            }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
         }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
     }
-    private void autoDrive(double stickX, double stickY, double turnStick) {
+    public void autoDrive(double stickX, double stickY, double turnStick) {
         double max;
 
         // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
@@ -483,7 +462,7 @@ public class farParkRed extends LinearOpMode {
         for (AprilTagDetection detection : currentDetections) {
             if (detection.metadata != null) {
                 telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                if (detection.id == 24 ) {
+                if (detection.id == 20 ) {
                     bearingIn = detection.ftcPose.bearing;
                 }
             }

@@ -1,8 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -24,11 +27,11 @@ import java.util.List;
  *     -right stick: turning
  *
  *     gamepad2:
- *     -a: override turning to lock onto an april tag
- *     -x: activate ball pushers
+ *     -right bumper: override turning to lock onto an april tag
+ *     -dpad left/right: activate ball pushers
  *     -b: turns on/off the flywheels
  *     -dpad up/down: changes the flywheel power
- *     -left Stick Y: changes launcher angle
+ *     -a/Y: changes launcher angle
  */
 
 //@Disabled
@@ -42,6 +45,21 @@ public class mainRobotCode extends LinearOpMode {
     private AprilTagProcessor aprilTag;
 
     private VisionPortal visionPortal;
+
+
+    static RevHubOrientationOnRobot.LogoFacingDirection[] logoFacingDirections
+            = RevHubOrientationOnRobot.LogoFacingDirection.values();
+    static RevHubOrientationOnRobot.UsbFacingDirection[] usbFacingDirections
+            = RevHubOrientationOnRobot.UsbFacingDirection.values();
+    static int LAST_DIRECTION = logoFacingDirections.length - 1;
+    static float TRIGGER_THRESHOLD = 0.2f;
+
+    IMU imu;
+    int logoFacingDirectionPosition;
+    int usbFacingDirectionPosition;
+    boolean orientationIsValid = true;
+
+
 
 
     // Declare OpMode members for each of the 4 driving motors.
@@ -58,8 +76,8 @@ public class mainRobotCode extends LinearOpMode {
     private Servo aimServoleft = null;
     private Servo aimServoRight = null;
 
-    private CRServo pusherServo1 = null;
-    private CRServo pusherServo2 = null;
+    private Servo pusherServo1 = null;
+    private Servo pusherServo2 = null;
 
     private DistanceSensor leftSensorDistance;
     private DistanceSensor rightSensorDistance;
@@ -69,6 +87,12 @@ public class mainRobotCode extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+
+
+        imu = hardwareMap.get(IMU.class, "imu");
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.LEFT, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
+
+
 
 
         frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeftDrive");//port 0
@@ -101,9 +125,8 @@ public class mainRobotCode extends LinearOpMode {
         aimServoleft = hardwareMap.get(Servo.class, "Servo0");//port 0
         aimServoRight = hardwareMap.get(Servo.class, "Servo1");//port 1
 
-        pusherServo1 = hardwareMap.get(CRServo.class, "CRServo0");//port 2
-        pusherServo2 = hardwareMap.get(CRServo.class, "CRServo1");//port 3
-
+        pusherServo1 = hardwareMap.get(Servo.class, "CRServo0");//port 2
+        pusherServo2 = hardwareMap.get(Servo.class, "CRServo1");//port 3
 
         backSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor0");
         rightSensorDistance = hardwareMap.get(DistanceSensor.class, "distanceSensor1");
@@ -134,7 +157,7 @@ public class mainRobotCode extends LinearOpMode {
 
         double flyWheelPow = .5;
 
-        double servoAngle = .5;
+        double servoAngle = .2;
 
 
 
@@ -142,31 +165,31 @@ public class mainRobotCode extends LinearOpMode {
         telemetry.update();
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
-
+        imu.resetYaw();
         /* run until the end of the match (driver presses STOP) ********************************************************************************************/
         while (opModeIsActive()) {
 
 
+            robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
 
 
 
 
-            if(gamepad2.a){
-                diff = aprilTagBearing();
-
-                diff /= 5000;
-
-                diff = Math.max(-0.5, Math.min(diff, 0.5));
 
 
 
-                driveTurn += (float) diff;
+            if(gamepad1.dpadUpWasPressed()) tolerance += 1;
+            else if (gamepad1.dpadDownWasPressed()) tolerance -= 1;
 
+            if (gamepad1.aWasPressed()){ targetYaw += 45;}
+            else if (gamepad1.bWasPressed()) targetYaw -= 45;
 
-            } // enable april tag traking
+            if (gamepad1.b) targetYaw = 0;
 
-            else if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw){
+            if (gamepad1.right_stick_x != 0){
+
+                targetYaw += gamepad1.right_stick_x/2;
 
                 if (targetYaw != (Math.max(-180, Math.min(targetYaw, 180)))){
 
@@ -181,8 +204,22 @@ public class mainRobotCode extends LinearOpMode {
 
                     }
 
-                } // locks target yaw to valid value
+                }
 
+
+
+
+            }
+
+
+
+
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //sets gyro correction and any actuator power
+
+            telemetry.update();
+            //gyro correction
+            if(targetYaw >= robotYaw+tolerance || targetYaw+tolerance <= robotYaw){
                 diff = robotYaw -targetYaw;
 
                 diff /= 500;
@@ -194,15 +231,41 @@ public class mainRobotCode extends LinearOpMode {
                 driveTurn += (float) diff;
 
 
-            } // yaw correction code
-
-            if (gamepad2.x) {
-                pusherServo1.setPower(1);
-                pusherServo2.setPower(1);
             }
-            else {
-                pusherServo1.setPower(1);
-                pusherServo2.setPower(1);
+            else{driveTurn = 0;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            if (gamepad2.dpad_left) {
+                pusherServo1.setPosition(0);
+                pusherServo2.setPosition(180);
+            }
+            else if (gamepad2.dpad_right){
+                pusherServo1.setPosition(180);
+                pusherServo2.setPosition(0);
+            }
+            if(gamepad2.dpadUpWasPressed()){
+                flyWheelPow += .05;
+            } else if (gamepad2.dpadDownWasPressed()) {
+                flyWheelPow-= .05;
             }
 
 
@@ -223,47 +286,49 @@ public class mainRobotCode extends LinearOpMode {
 
 
 
-            targetYaw += gamepad1.right_stick_x/2;
 
-           /* ***********************************************************************************************************************************************/
+
+            /* ***********************************************************************************************************************************************/
 
             driveX = gamepad1.left_stick_x;
             driveY = gamepad1.left_stick_y;
 
 
-            double max;
+                driveTurn = gamepad1.right_stick_x;
 
-            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double axial   = -driveTurn;  // Note: pushing stick forward gives negative value
-            double lateral =  driveX;
-            double yaw     =  driveY;
+                double max;
 
-            // Combine the joystick requests for each axis-motion to determine each wheel's power.
-            // Set up a variable for each drive wheel to save the power level for telemetry.
-            double frontLeftPower  = axial + lateral + yaw;
-            double frontRightPower = axial - lateral - yaw;
-            double backLeftPower   = axial - lateral + yaw;
-            double backRightPower  = axial + lateral - yaw;
+                // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
+                double axial = -driveY;  // Note: pushing stick forward gives negative value
+                double lateral = driveX;
+                double yaw = driveTurn;
 
-            // Normalize the values so no wheel power exceeds 100%
-            // This ensures that the robot maintains the desired motion.
-            max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
-            max = Math.max(max, Math.abs(backLeftPower));
-            max = Math.max(max, Math.abs(backRightPower));
+                // Combine the joystick requests for each axis-motion to determine each wheel's power.
+                // Set up a variable for each drive wheel to save the power level for telemetry.
+                double frontLeftPower = axial + lateral + yaw;
+                double frontRightPower = axial - lateral - yaw;
+                double backLeftPower = axial - lateral + yaw;
+                double backRightPower = axial + lateral - yaw;
 
-            if (max > .25) {
-                frontLeftPower  /= max;
-                frontRightPower /= max;
-                backLeftPower   /= max;
-                backRightPower  /= max;
-            }
+                // Normalize the values so no wheel power exceeds 100%
+                // This ensures that the robot maintains the desired motion.
+                max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
+                max = Math.max(max, Math.abs(backLeftPower));
+                max = Math.max(max, Math.abs(backRightPower));
 
-            // Send calculated power to wheels
+                if (max > .25) {
+                    frontLeftPower /= max;
+                    frontRightPower /= max;
+                    backLeftPower /= max;
+                    backRightPower /= max;
+
+
+                    targetYaw = robotYaw;
+                }
             frontLeftDrive.setPower(frontLeftPower);
             frontRightDrive.setPower(frontRightPower);
             backLeftDrive.setPower(backLeftPower);
             backRightDrive.setPower(backRightPower);
-
             /* driving code above *********************************************************************************/
 
 
@@ -299,8 +364,14 @@ public class mainRobotCode extends LinearOpMode {
 
 
 
+            if (gamepad2.yWasPressed()) {
+                servoAngle += .05;
 
-            servoAngle += gamepad2.left_stick_y;
+            } else if (gamepad2.aWasPressed()) {
+
+                servoAngle -= .05;
+            }
+
 
             if(gamepad2.bWasPressed()){
                 flywheelState = !flywheelState;
@@ -317,14 +388,11 @@ public class mainRobotCode extends LinearOpMode {
             }
 
 
-            if(gamepad2.dpadUpWasPressed())
-                flyWheelPow += .05;
-            else if(gamepad2.dpadDownWasPressed()){
-                flyWheelPow -= .05;
-            }
+
+
             /* sets power to actuators **********************************/
 
-            servoAngle = Math.max(0, Math.min(1, servoAngle));
+            servoAngle = Math.max(0.2, Math.min(.65, servoAngle));
 
             aimServoleft.setPosition(servoAngle);
             aimServoRight.setPosition(servoAngle);
@@ -336,6 +404,10 @@ public class mainRobotCode extends LinearOpMode {
             /* telemetry updates ***************************************/
             //telemetryAprilTag();
             telemetry.addData("fly Wheel Power", flyWheelPow);
+            telemetry.addData("launcher angle", servoAngle);
+            telemetry.addData("pusher servo", pusherServo1.getPosition());
+            telemetry.addData("target yaw", targetYaw);
+            telemetry.addData("robot yaw", robotYaw);
             telemetry.addData("Status", "Running");
             telemetry.update();
 
