@@ -37,7 +37,6 @@ import android.util.Size;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -55,9 +54,9 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 
 //@Disabled
-@Autonomous(name="Start close", group="Linear OpMode")
+@Autonomous(name="Start close Red", group="Linear OpMode")
 
-public class closePark extends LinearOpMode {
+public class redClosePark extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
@@ -109,6 +108,23 @@ public class closePark extends LinearOpMode {
     private DistanceSensor rightSensorDistance;
     private DistanceSensor backSensorDistance;
 
+
+    double encoderClicksPerWheelRev = 312;
+    double wheelDiam = 104;
+
+    double clicksPerMM = encoderClicksPerWheelRev * (wheelDiam/Math.PI);
+
+    double driveSpeed = .2;
+    double turnSpeed = .2;
+
+
+
+
+
+
+
+
+
     @Override
     public void runOpMode() {
 
@@ -127,7 +143,20 @@ public class closePark extends LinearOpMode {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
+
+        frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+
+
 
         flyWheelLeft = hardwareMap.get(DcMotor.class, "Motor0");
         flyWheelRight = hardwareMap.get(DcMotor.class, "Motor1");
@@ -154,6 +183,9 @@ public class closePark extends LinearOpMode {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 
@@ -186,6 +218,10 @@ public class closePark extends LinearOpMode {
 
 
 
+
+
+
+
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -200,162 +236,101 @@ public class closePark extends LinearOpMode {
             double robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
 
+            telemetry.addData("Run Time", runtime.seconds());
+            telemetry.addData("left Sens", leftSensorDistance.getDistance(DistanceUnit.MM));
+            telemetry.addData("right sens", rightSensorDistance.getDistance(DistanceUnit.MM));
+            telemetry.addData("backsens", backSensorDistance.getDistance(DistanceUnit.MM));
+            telemetry.addData("oreintation", robotYaw);
+            telemetry.addData("target oreintation", targetYaw);
+            telemetry.addLine(currentStepDescription);
+            telemetry.update();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-            if (step == 1) {
                 targetYaw = 0;
-
-                driveY = .2F;
 
                 currentStepDescription = "move away from wall";
 
-
-                if (runtime.seconds() >= 3) {
-                    step = 2;
-                    driveY = 0;
-                }
-                else if (step == 2) {
+                encoderDrive(.5, -1700, -1700, 5);
 
 
-                    flywheelState = true;
-                    flyWheelPow= .4;
 
+                for(int i = 1; i == 3; i++) {
+                    currentStepDescription = "launching ball" + i;
+                    telemetry.update();
 
-                    pusherServo1.setPosition(0);
-                    pusherServo2.setPosition(180);
-                    sleep(100);
                     pusherServo1.setPosition(180);
                     pusherServo2.setPosition(0);
                     sleep(100);
+                    pusherServo1.setPosition(0);
+                    pusherServo2.setPosition(180);
 
+                    sleep(100);
 
-                } else {
-                    stop();
                 }
 
+                targetYaw = 23.43;
+            while (targetYaw >= robotYaw + tolerance || targetYaw + tolerance <= robotYaw) {
+
+                diff = robotYaw - targetYaw;
+
+                diff /= 500;
+
+                diff = Math.max(-0.5, Math.min(diff, 0.5));
+
+
+
+
+                frontLeftDrive.setPower(diff);
+                frontRightDrive.setPower(diff);
+                backLeftDrive.setPower(diff);
+                backRightDrive.setPower(diff);
+
+                telemetry.update();
+
+            }
+
+             encoderDrive(.5, -1694.77, -1694.77, 10);
+
+                targetYaw = -54.046;
+
+            while (opModeIsActive()) {
+
+                diff = robotYaw - targetYaw;
+
+                diff /= 500;
+
+                diff = Math.max(-0.5, Math.min(diff, 0.5));
+
+
+
+
+                frontLeftDrive.setPower(diff);
+                frontRightDrive.setPower(diff);
+                backLeftDrive.setPower(diff);
+                backRightDrive.setPower(diff);
+                    telemetry.update();
+            }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 //set gyro correction and any actuator power
 
 
-                telemetry.update();
+
                 //gyro correction
 
-                if (targetYaw >= robotYaw + tolerance || targetYaw + tolerance <= robotYaw && oreintationMovement) {
-
-                    diff = robotYaw - targetYaw;
-
-                    diff /= 500;
-
-                    diff = Math.max(-0.5, Math.min(diff, 0.5));
-
-
-                    driveTurn += (float) diff;
-
-
-                } else {
-                    driveTurn = 0;
-                }
-
-
-                if (flywheelState == true) {
-                    flyWheelLeft.setPower(flyWheelPow);
-                    flyWheelRight.setPower(flyWheelPow);
-                } else {
-                    flyWheelLeft.setPower(0);
-                    flyWheelRight.setPower(0);
-                }
-
-                aimServoleft.setPosition(launcherAngle);
-                aimServoRight.setPosition(launcherAngle);
-
-                double max;
-
-                // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-                double axial = -driveY;  // Note: pushing stick forward gives negative value
-                double lateral = driveX;
-                double yaw = driveTurn;
-
-                // Combine the joystick requests for each axis-motion to determine each wheel's power.
-                // Set up a variable for each drive wheel to save the power level for telemetry.
-                double frontLeftPower = axial + lateral + yaw;
-                double frontRightPower = axial - lateral - yaw;
-                double backLeftPower = axial - lateral + yaw;
-                double backRightPower = axial + lateral - yaw;
-
-                // Normalize the values so no wheel power exceeds 100%
-                // This ensures that the robot maintains the desired motion.
-                max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
-                max = Math.max(max, Math.abs(backLeftPower));
-                max = Math.max(max, Math.abs(backRightPower));
-
-                if (max > 1.0) {
-                    frontLeftPower /= max;
-                    frontRightPower /= max;
-                    backLeftPower /= max;
-                    backRightPower /= max;
-                }
-
-                // Send calculated power to wheels
-                frontLeftDrive.setPower(frontLeftPower);
-                frontRightDrive.setPower(frontRightPower);
-                backLeftDrive.setPower(backLeftPower);
-                backRightDrive.setPower(backRightPower);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
                 // Show the elapsed game time
-                telemetry.addData("Run Time", runtime.seconds());
-                telemetry.addData("left Sens", leftSensorDistance.getDistance(DistanceUnit.MM));
-                telemetry.addData("right sens", rightSensorDistance.getDistance(DistanceUnit.MM));
-                telemetry.addData("backsens", backSensorDistance.getDistance(DistanceUnit.MM));
-                telemetry.addData("oreintation", robotYaw);
-                telemetry.addData("target oreintation", targetYaw);
-                telemetry.addLine(currentStepDescription);
-                telemetry.update();
-            }
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
         }
     }
-    public void autoDrive(double stickX, double stickY, double turnStick) {
-        double max;
-
-        // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-        double axial   = -stickY;  // Note: pushing stick forward gives negative value
-        double lateral =  stickX;
-        double yaw     =  turnStick;
-
-        // Combine the joystick requests for each axis-motion to determine each wheel's power.
-        // Set up a variable for each drive wheel to save the power level for telemetry.
-        double frontLeftPower  = axial + lateral + yaw;
-        double frontRightPower = axial - lateral - yaw;
-        double backLeftPower   = axial - lateral + yaw;
-        double backRightPower  = axial + lateral - yaw;
-
-        // Normalize the values so no wheel power exceeds 100%
-        // This ensures that the robot maintains the desired motion.
-        max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
-        max = Math.max(max, Math.abs(backLeftPower));
-        max = Math.max(max, Math.abs(backRightPower));
-
-        if (max > 1.0) {
-            frontLeftPower  /= max;
-            frontRightPower /= max;
-            backLeftPower   /= max;
-            backRightPower  /= max;
-        }
-
-        // Send calculated power to wheels
-        frontLeftDrive.setPower(frontLeftPower);
-        frontRightDrive.setPower(frontRightPower);
-        backLeftDrive.setPower(backLeftPower);
-        backRightDrive.setPower(backRightPower);
-    }
-
 
     private void initAprilTag() {
 
@@ -464,4 +439,67 @@ public class closePark extends LinearOpMode {
 
         return bearingIn;
     }
+
+    public void encoderDrive(double speed, double leftMM, double rightMM, double timeoutS) {
+        int newLeftTarget;
+        int newRightTarget;
+
+        // Ensure that the OpMode is still active
+        if (opModeIsActive()) {
+
+            // Determine new target position, and pass to motor controller
+            newLeftTarget = frontLeftDrive.getCurrentPosition() + (int)(leftMM * clicksPerMM);
+            newRightTarget = frontRightDrive.getCurrentPosition() + (int)(rightMM * clicksPerMM);
+            frontLeftDrive.setTargetPosition(newLeftTarget);
+            backLeftDrive.setTargetPosition(newLeftTarget);
+
+            frontRightDrive.setTargetPosition(newRightTarget);
+            backRightDrive.setTargetPosition(newRightTarget);
+            // Turn On RUN_TO_POSITION
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // reset the timeout time and start motion.
+            runtime.reset();
+            frontLeftDrive.setPower(Math.abs(speed));
+            backRightDrive.setPower(Math.abs(speed));
+
+            frontRightDrive.setPower(Math.abs(speed));
+            backRightDrive.setPower(Math.abs(speed));
+
+
+            // keep looping while we are still active, and there is time left, and both motors are running.
+            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+            // its target position, the motion will stop.  This is "safer" in the event that the robot will
+            // always end the motion as soon as possible.
+            // However, if you require that BOTH motors have finished their moves before the robot continues
+            // onto the next step, use (isBusy() || isBusy()) in the loop test.
+            while (opModeIsActive() &&
+                    (runtime.seconds() < timeoutS) &&
+                    (frontRightDrive.isBusy() && backRightDrive.isBusy())) {
+
+                // Display it for the driver.
+                telemetry.addData("Running to",  " %7d :%7d", newLeftTarget,  newRightTarget);
+                telemetry.addData("Currently at",  " at %7d :%7d",
+                        frontRightDrive.getCurrentPosition(), frontRightDrive.getCurrentPosition());
+                telemetry.update();
+            }
+
+            // Stop all motion;
+            frontRightDrive.setPower(0);
+            backLeftDrive.setPower(0);
+            frontRightDrive.setPower(0);
+            backRightDrive.setPower(0);
+            // Turn off RUN_TO_POSITION
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            sleep(250);   // optional pause after each move.
+        }
+    }
+
 }
