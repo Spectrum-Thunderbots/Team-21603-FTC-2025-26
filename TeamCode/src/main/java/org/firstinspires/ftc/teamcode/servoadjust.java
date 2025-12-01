@@ -18,12 +18,13 @@ public class servoadjust extends  LinearOpMode {
     double extended = .7;
     double mid = 0.1;
 
-    double vari = 0;
+    double varileft = 0;
+    double variright = 1;
 
     @Override
     public void runOpMode() throws InterruptedException {
-        linearActuatorServo1 = hardwareMap.get(Servo.class, "Servo0");
-        linearActuatorServo2 = hardwareMap.get(Servo.class, "Servo1");
+        linearActuatorServo1 = hardwareMap.get(Servo.class, "CRServo0");
+        linearActuatorServo2 = hardwareMap.get(Servo.class, "CRServo1");
 
 
 
@@ -33,19 +34,23 @@ public class servoadjust extends  LinearOpMode {
         waitForStart();
         while (opModeIsActive()) {
             if (gamepad1.dpadUpWasPressed()) {
-                vari += .1;
-
+                varileft += .1;
+                variright -= .1;
             } else if (gamepad1.dpadDownWasPressed()) {
 
-                vari -= .1;
+                varileft -= .1;
+                variright += .1;
             }
 
-            vari = Math.max(0.4, Math.min(vari, 0.7));
-            linearActuatorServo1.setPosition(vari);
-            linearActuatorServo2.setPosition(vari);
+            varileft = Math.max(0, Math.min(varileft, .6));
+            variright = Math.max(.4, Math.min(variright, 1));
+
+            linearActuatorServo1.setPosition(variright);
+            linearActuatorServo2.setPosition(varileft);
 
 
-            telemetry.addData("DAtaIn", vari);
+            telemetry.addData("DAtaIn", varileft);
+            telemetry.addData("datain", variright);
             telemetry.update();
 
         }

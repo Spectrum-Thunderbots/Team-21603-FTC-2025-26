@@ -160,6 +160,8 @@ public class mainRobotCode extends LinearOpMode {
         double servoAngle = .2;
 
 
+        pusherServo2.setPosition(0.4);
+        pusherServo1.setPosition(.6);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -255,12 +257,12 @@ public class mainRobotCode extends LinearOpMode {
 
 
             if (gamepad2.dpad_left) {
-                pusherServo1.setPosition(0);
-                pusherServo2.setPosition(180);
+                pusherServo1.setPosition(1);
+                pusherServo2.setPosition(0);
             }
             else if (gamepad2.dpad_right){
-                pusherServo1.setPosition(180);
-                pusherServo2.setPosition(0);
+                pusherServo1.setPosition(.6);
+                pusherServo2.setPosition(.4);
             }
             if(gamepad2.dpadUpWasPressed()){
                 flyWheelPow += .05;
@@ -294,37 +296,37 @@ public class mainRobotCode extends LinearOpMode {
             driveY = gamepad1.left_stick_y;
 
 
-                driveTurn = gamepad1.right_stick_x;
+            driveTurn = gamepad1.right_stick_x;
 
-                double max;
+            double max;
 
-                // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-                double axial = -driveY;  // Note: pushing stick forward gives negative value
-                double lateral = driveX;
-                double yaw = driveTurn;
+            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
+            double axial = -driveY;  // Note: pushing stick forward gives negative value
+            double lateral = driveX;
+            double yaw = driveTurn;
 
-                // Combine the joystick requests for each axis-motion to determine each wheel's power.
-                // Set up a variable for each drive wheel to save the power level for telemetry.
-                double frontLeftPower = axial + lateral + yaw;
-                double frontRightPower = axial - lateral - yaw;
-                double backLeftPower = axial - lateral + yaw;
-                double backRightPower = axial + lateral - yaw;
+            // Combine the joystick requests for each axis-motion to determine each wheel's power.
+            // Set up a variable for each drive wheel to save the power level for telemetry.
+            double frontLeftPower = axial + lateral + yaw;
+            double frontRightPower = axial - lateral - yaw;
+            double backLeftPower = axial - lateral + yaw;
+            double backRightPower = axial + lateral - yaw;
 
-                // Normalize the values so no wheel power exceeds 100%
-                // This ensures that the robot maintains the desired motion.
-                max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
-                max = Math.max(max, Math.abs(backLeftPower));
-                max = Math.max(max, Math.abs(backRightPower));
+            // Normalize the values so no wheel power exceeds 100%
+            // This ensures that the robot maintains the desired motion.
+            max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
+            max = Math.max(max, Math.abs(backLeftPower));
+            max = Math.max(max, Math.abs(backRightPower));
 
-                if (max > .25) {
-                    frontLeftPower /= max;
-                    frontRightPower /= max;
-                    backLeftPower /= max;
-                    backRightPower /= max;
+            if (max > .25) {
+                frontLeftPower /= max;
+                frontRightPower /= max;
+                backLeftPower /= max;
+                backRightPower /= max;
 
 
-                    targetYaw = robotYaw;
-                }
+                targetYaw = robotYaw;
+            }
             frontLeftDrive.setPower(frontLeftPower);
             frontRightDrive.setPower(frontRightPower);
             backLeftDrive.setPower(backLeftPower);
@@ -392,7 +394,7 @@ public class mainRobotCode extends LinearOpMode {
 
             /* sets power to actuators **********************************/
 
-            servoAngle = Math.max(0.2, Math.min(.65, servoAngle));
+            servoAngle = Math.max(0.3, Math.min(.6, servoAngle));
 
             aimServoleft.setPosition(servoAngle);
             aimServoRight.setPosition(servoAngle);

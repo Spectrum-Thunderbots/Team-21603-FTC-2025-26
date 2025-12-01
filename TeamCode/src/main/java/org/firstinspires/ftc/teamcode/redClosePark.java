@@ -109,7 +109,7 @@ public class redClosePark extends LinearOpMode {
     private DistanceSensor backSensorDistance;
 
 
-    double encoderClicksPerWheelRev = 312;
+    double encoderClicksPerWheelRev = 415.2;
     double wheelDiam = 104;
 
     double clicksPerMM = encoderClicksPerWheelRev * (wheelDiam/Math.PI);
@@ -220,6 +220,8 @@ public class redClosePark extends LinearOpMode {
 
 
 
+        pusherServo2.setPosition(0.5);
+        pusherServo1.setPosition(.5);
 
 
         // Wait for the game to start (driver presses START)
@@ -259,12 +261,18 @@ public class redClosePark extends LinearOpMode {
                     currentStepDescription = "launching ball" + i;
                     telemetry.update();
 
-                    pusherServo1.setPosition(180);
-                    pusherServo2.setPosition(0);
-                    sleep(100);
-                    pusherServo1.setPosition(0);
-                    pusherServo2.setPosition(180);
 
+                    for(double c = 0; c == .5; c += .1) {
+
+                        pusherServo2.setPosition(c);
+                        pusherServo1.setPosition(1 - c);
+                    }
+                    sleep(100);
+                    for(double c = .5;  c == 0; c -= .1){
+
+                        pusherServo2.setPosition(c);
+                        pusherServo1.setPosition(1-c);
+                    }
                     sleep(100);
 
                 }
