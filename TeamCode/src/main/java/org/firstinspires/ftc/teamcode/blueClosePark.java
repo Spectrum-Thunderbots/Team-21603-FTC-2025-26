@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// autonomus expecting a disitance sensor on the left right and back with the camera on the launcher, robot starting facing back towards the wall
+
 
 package org.firstinspires.ftc.teamcode;
 
