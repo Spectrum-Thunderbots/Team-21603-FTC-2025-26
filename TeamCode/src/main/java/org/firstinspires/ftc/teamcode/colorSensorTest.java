@@ -41,7 +41,7 @@ import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-@TeleOp(name = "colorSensortest", group = "Linear OpMode")
+@TeleOp(name = "colorSensortest", group = "Tests")
 @Disabled
 public class colorSensorTest extends LinearOpMode {
 

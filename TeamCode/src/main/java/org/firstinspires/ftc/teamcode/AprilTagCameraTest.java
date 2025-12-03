@@ -40,7 +40,7 @@ import java.util.List;
 
 @Disabled
 
-@TeleOp(name = "aprilTagCameraTest", group = "Linear Opmode")
+@TeleOp(name = "aprilTagCameraTest", group = "Tests")
 
 public class AprilTagCameraTest extends LinearOpMode {
 

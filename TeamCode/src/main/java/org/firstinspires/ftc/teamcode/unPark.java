@@ -35,7 +35,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.ElapsedTime;
+
 
 
 @Disabled
@@ -44,7 +44,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class unPark extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
-    private ElapsedTime runtime = new ElapsedTime();
+
     private DcMotor frontLeftDrive = null;
     private DcMotor backLeftDrive = null;
     private DcMotor frontRightDrive = null;
@@ -66,94 +66,28 @@ public class unPark extends LinearOpMode {
 
 
 
-
-
-
-
-
-
-
-
-        float driveX = 0;
-        float driveY = 0;
-        float driveTurn = 0;
-
-        float tolerance = 1;
-
-        int step = 0;
-
-        // Wait for the game to start (driver presses START)
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
-
         waitForStart();
-        runtime.reset();
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         while (opModeIsActive()) {
 
 
-            if (step == 1) {
+            frontLeftDrive.setPower(.2);
+            frontRightDrive.setPower(.2);
+            backLeftDrive.setPower(.2);
+            backRightDrive.setPower(.2);
 
-                driveY -= .2F;
+            sleep(3000);
 
-                if(runtime.seconds() >= 2) // insert statment that shows when step 0 is done
-                {
-                    step = 2;
-                }
+            stop();
 
-
-            }
-            else {
-                stop();
-            }
-
-
-            autoDrive(driveX, driveY, driveTurn);
-
-            // Show the elapsed game time
-            telemetry.addData("Run Time", runtime.seconds());
-
-            telemetry.update();
         }
 
 
 
 
     }
-    private void autoDrive(double stickX, double stickY, double turnStick) {
-        double max;
 
-        // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-        double axial   = -stickY;  // Note: pushing stick forward gives negative value
-        double lateral =  stickX;
-        double yaw     =  turnStick;
-
-        // Combine the joystick requests for each axis-motion to determine each wheel's power.
-        // Set up a variable for each drive wheel to save the power level for telemetry.
-        double frontLeftPower  = axial + lateral + yaw;
-        double frontRightPower = axial - lateral - yaw;
-        double backLeftPower   = axial - lateral + yaw;
-        double backRightPower  = axial + lateral - yaw;
-
-        // Normalize the values so no wheel power exceeds 100%
-        // This ensures that the robot maintains the desired motion.
-        max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
-        max = Math.max(max, Math.abs(backLeftPower));
-        max = Math.max(max, Math.abs(backRightPower));
-
-        if (max > 1.0) {
-            frontLeftPower  /= max;
-            frontRightPower /= max;
-            backLeftPower   /= max;
-            backRightPower  /= max;
-        }
-
-        // Send calculated power to wheels
-        frontLeftDrive.setPower(frontLeftPower);
-        frontRightDrive.setPower(frontRightPower);
-        backLeftDrive.setPower(backLeftPower);
-        backRightDrive.setPower(backRightPower);
-    }
 
 }

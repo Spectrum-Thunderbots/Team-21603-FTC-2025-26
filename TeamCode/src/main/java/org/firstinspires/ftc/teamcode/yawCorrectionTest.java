@@ -17,7 +17,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 
 @Disabled
-@TeleOp(name="yawCorrectionTest", group="Linear OpMode")
+@TeleOp(name="yawCorrectionTest", group="Tests")
 
 public class yawCorrectionTest extends LinearOpMode {
 

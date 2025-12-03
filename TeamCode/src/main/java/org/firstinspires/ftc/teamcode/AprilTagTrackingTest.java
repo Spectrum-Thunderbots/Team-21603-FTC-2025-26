@@ -23,7 +23,7 @@ import java.util.List;
 
 //@Disabled
 
-@TeleOp(name = "AprilTagTrackingTest", group = "Linear Opmode")
+@TeleOp(name = "AprilTagTrackingTest", group = "Tests")
 
 public class AprilTagTrackingTest extends LinearOpMode {
 

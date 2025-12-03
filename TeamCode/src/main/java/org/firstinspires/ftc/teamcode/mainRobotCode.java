@@ -31,7 +31,7 @@ import java.util.List;
  *     -dpad left/right: activate ball pushers
  *     -b: turns on/off the flywheels
  *     -dpad up/down: changes the flywheel power
- *     -a/Y: changes launcher angle
+ *     -a/y: changes launcher angle
  */
 
 //@Disabled

@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImpl;
 import com.qualcomm.robotcore.util.Range;
 
-@TeleOp
+@TeleOp(name = "servo adjuster", group = "Tests")
 public class servoadjust extends  LinearOpMode {
     private Servo linearActuatorServo1 = null;
     private Servo linearActuatorServo2 = null;
